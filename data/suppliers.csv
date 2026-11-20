@@ -1,0 +1,7 @@
+SupplierId,SupplierName,SupplierRegion,TargetLeadTimeDays
+S01,Supplier A,North,7
+S02,Supplier B,South,8
+S03,Supplier C,East,9
+S04,Supplier D,North,10
+S05,Supplier E,South,11
+S06,Supplier F,East,12

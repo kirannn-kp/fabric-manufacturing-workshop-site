@@ -1,0 +1,16 @@
+MaterialId,MaterialName,MaterialCategory,SafetyStock,UnitOfMeasure
+M01,Bearing Kit,Mechanical,20,Each
+M02,Seal Kit,Mechanical,20,Each
+M03,Valve Kit,Mechanical,20,Each
+M04,Rotor Kit,Mechanical,20,Each
+M05,Housing Kit,Mechanical,20,Each
+M06,Gasket Kit,Mechanical,20,Each
+M07,Connector Kit,Mechanical,20,Each
+M08,Clamp Kit,Mechanical,20,Each
+M09,Coupler Kit,Mechanical,20,Each
+M10,Sensor Kit,Electrical,20,Each
+M11,Cover Kit,Mechanical,20,Each
+M12,Shaft Kit,Mechanical,20,Each
+M13,Spring Kit,Mechanical,20,Each
+M14,Bracket Kit,Mechanical,20,Each
+M15,Filter Kit,Mechanical,20,Each
