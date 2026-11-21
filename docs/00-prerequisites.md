@@ -30,8 +30,7 @@ Microsoft will provide the datasets and starter material.
 
 ## GitHub
 
-GitHub is used to open or download the workshop instructions.
-GitHub Copilot is not required.
+GitHub is used to open or download the workshop instructions. For event-provided Copilot access, follow the [sign-up steps](onsite-workshop.md#get-github-copilot-access) in the onsite guide. The Fabric labs can run without Copilot.
 
 ## Microsoft Foundry
 

@@ -1,7 +1,5 @@
 # Manufacturing workshop: from machine-fault evidence to a pilot
 
-**Problem statement:** You are the incoming shift lead. Two machines have repeated faults. **Which machine should maintenance review first, and what evidence justifies that choice?** Build the data and queries on Day 1, use the same assets to model and explain the evidence on Day 2, and decide how to pilot the workflow on Day 3.
-
 **Bengaluru local time:** Monday and Tuesday 09:30–16:00; Wednesday 09:30–14:00.
 
 ## Prerequisites and downloads
@@ -9,11 +7,45 @@
 - **Laptop:** Bring a charger and use Microsoft Edge or Google Chrome. Check sign-in to [Microsoft Fabric](https://app.fabric.microsoft.com/) and Microsoft Teams if your group uses it for collaboration.
 - **Workspace:** Open the Fabric workspace shared by the organizer in the correct tenant. Check that you can see **New item** and have permission to create and edit items. At least one person per team needs working edit access on an active Fabric capacity. Pair with that person if you have read-only access. Keep using the same workspace and item names on both Fabric days.
 - **Features:** Confirm access to Lakehouse, Eventhouse, and a semantic model. Data Agent, model editing, ontology, and Operations Agent depend on the environment. Use the fallback in the relevant lab if a feature is unavailable. The facilitator shares prepared items privately.
-- **Files:** Download [plants.csv](../data/plants.csv) and [machine_events.csv](../data/machine_events.csv). Save them as `.csv`, not `.csv.txt`. The data is synthetic; there is no live SAP connection or data preparation before class. GitHub is only for instructions and downloads; no GitHub Copilot, VS Code, Power BI Desktop, or report authoring is required.
+- **Files:** Download [plants.csv](../data/plants.csv) and [machine_events.csv](../data/machine_events.csv). Save them as `.csv`, not `.csv.txt`. The data is synthetic; there is no live SAP connection or data preparation before class. No VS Code, Power BI Desktop, or report authoring is required for the Fabric labs.
 - **Day 3:** No participant Foundry account, Azure subscription, or deployment is required. The facilitator leads the walkthrough.
 - **If blocked:** Tell the facilitator privately which product and step failed, the exact error, and the time. Include a screenshot with sensitive information redacted. Switch to the prepared item or evidence card rather than waiting through the lab.
 
 **Team setup:** One driver uses Fabric, one person verifies the result, and one records the evidence. Rotate roles between labs. Keep your notes and workspace links private.
+
+### Get GitHub Copilot access
+
+1. On your phone, scan the event QR code shared by the organizer.
+2. Sign in with your **personal GitHub account**. This is separate from your Fabric sign-in.
+3. Enter the organizer's join code and select **Join**. If GitHub sends you an organization invitation, accept it using the same account.
+4. On your laptop, sign in with that same account and open [GitHub Copilot settings](https://github.com/settings/copilot) to check access. If it is missing, ask the organizer privately to check your membership and Copilot seat.
+
+Don't post the QR code or join code. If Copilot access is pending, start the Fabric labs anyway; they don't require Copilot.
+
+## What we're solving — problem and architecture
+
+You're taking over a factory shift. Two machines have repeated faults, and maintenance can review only one first. **Which machine should maintenance review first, and what evidence supports your choice?**
+
+Compare how often each machine reported a fault and how severe those faults were. Your team will hand over a short recommendation: **one machine, the numbers behind your choice, and what the data doesn't tell you.** The data can help prioritize a review; it cannot prove what caused the faults or which orders were affected.
+
+### How the data flows
+
+```text
+Day 1 | Load and check the data in Fabric
+  Both CSV files -----> Lakehouse: check the tables with SQL
+  Machine events -----> Eventhouse: query events and build a dashboard
+
+Day 2 | Reuse the same workspace and data
+  Lakehouse  -> Semantic model --------------------+
+  Eventhouse -> Data Agent and fault-rule replay --+
+                                                   v
+                               Evidence card: one machine and why
+
+Day 3 | Use the evidence to plan a small pilot
+  Evidence card -> Foundry walkthrough -> Pilot scope and next steps
+```
+
+The event file is loaded twice on purpose: the Lakehouse copy supports the model, and the Eventhouse copy supports event queries, the dashboard, and the agent exercises. Day 3 uses the **evidence card**, not a live connection to Foundry.
 
 ## Day 1 — Build the data assets in Fabric
 
