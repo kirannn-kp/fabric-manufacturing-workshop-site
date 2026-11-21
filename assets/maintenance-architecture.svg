@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 930" width="1000" height="930" role="img" aria-labelledby="title desc">
+  <title id="title">Maintenance review: workshop solution architecture</title>
+  <desc id="desc">Two CSVs feed the Lakehouse; only machine events feed Eventhouse. The SQL and semantic model path and the KQL, dashboard, and agent path produce evidence for a human shift lead. A manual handoff takes that evidence to the Day 3 Foundry walkthrough and pilot planning.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0 0L8 4L0 8Z" fill="#506480"/>
+    </marker>
+    <style>
+      text { font-family: "Segoe UI", Arial, sans-serif; fill: #142743; }
+      .title { font-size: 32px; font-weight: 700; }
+      .heading { font-size: 22px; font-weight: 700; }
+      .body { font-size: 18px; }
+      .label { font-size: 15px; font-weight: 700; letter-spacing: 1px; }
+      .muted { fill: #455d77; }
+      .arrow { fill: none; stroke: #506480; stroke-width: 2.5; marker-end: url(#arrow); }
+    </style>
+  </defs>
+  <rect width="1000" height="930" rx="18" fill="#f5f8fc"/>
+  <text x="40" y="48" class="title">Which machine should maintenance review first?</text>
+  <text x="40" y="78" class="body muted">Workshop architecture: synthetic inputs, two Fabric paths, one human decision</text>
+
+  <rect x="50" y="104" width="416" height="70" rx="12" fill="#fff" stroke="#a7b7cb"/>
+  <rect x="534" y="104" width="416" height="70" rx="12" fill="#fff" stroke="#a7b7cb"/>
+  <text x="70" y="134" class="heading">plants.csv</text>
+  <text x="70" y="158" class="body muted">Plant IDs and names</text>
+  <text x="554" y="134" class="heading">machine_events.csv</text>
+  <text x="554" y="158" class="body muted">Time, plant, machine, event type, severity</text>
+
+  <rect x="30" y="222" width="940" height="420" rx="16" fill="#fff" stroke="#a7b7cb"/>
+  <path class="arrow" d="M180 174V266"/>
+  <path class="arrow" d="M648 174V198H354V266"/>
+  <path class="arrow" d="M824 174V266"/>
+  <text x="500" y="247" text-anchor="middle" class="label">FABRIC TEAM WORKSPACE</text>
+
+  <rect x="50" y="268" width="416" height="116" rx="12" fill="#e6f5ff" stroke="#79b6da"/>
+  <rect x="534" y="268" width="416" height="116" rx="12" fill="#e5f7f1" stroke="#73b7a1"/>
+  <text x="70" y="298" class="label">DAY 1 / LAKEHOUSE IN ONELAKE</text>
+  <text x="70" y="330" class="body">Load both CSVs as tables.</text>
+  <text x="70" y="357" class="body">SQL endpoint: check plant totals, including zero.</text>
+  <text x="554" y="298" class="label">DAY 1 / EVENTHOUSE KQL DATABASE</text>
+  <text x="554" y="330" class="body">Load the event CSV; check counts and severity.</text>
+  <text x="554" y="357" class="body">Dashboard or saved queries show the results.</text>
+
+  <path class="arrow" d="M258 384V418"/>
+  <path class="arrow" d="M742 384V418"/>
+  <rect x="50" y="420" width="416" height="144" rx="12" fill="#e6f5ff" stroke="#79b6da"/>
+  <rect x="534" y="420" width="416" height="144" rx="12" fill="#e5f7f1" stroke="#73b7a1"/>
+  <text x="70" y="450" class="label">DAY 2 / REUSE LAKEHOUSE TABLES</text>
+  <text x="70" y="482" class="body">Model and DAX: check the totals.</text>
+  <text x="70" y="510" class="body">Ontology sketch: plant, machine, fault event.</text>
+  <text x="70" y="538" class="body muted">Use the read-only model route if needed.</text>
+  <text x="554" y="450" class="label">DAY 2 / REUSE THE KQL DATABASE</text>
+  <text x="554" y="482" class="body">Data Agent: verify answers against KQL.</text>
+  <text x="554" y="510" class="body">Replay the Operations Agent rule in KQL.</text>
+  <text x="554" y="538" class="body muted">No alerts, tickets, or automatic actions.</text>
+
+  <path class="arrow" d="M258 564V606H490V680"/>
+  <path class="arrow" d="M742 564V606H510V680"/>
+  <rect x="125" y="682" width="750" height="92" rx="12" fill="#fff5d9" stroke="#c8a353"/>
+  <text x="500" y="713" text-anchor="middle" class="heading">Evidence card + human review</text>
+  <text x="500" y="746" text-anchor="middle" class="body">One machine to review, supporting numbers, and what remains unknown</text>
+
+  <path class="arrow" d="M500 774V818" stroke-dasharray="5 4"/>
+  <text x="518" y="803" class="label muted">MANUAL HANDOFF</text>
+  <rect x="125" y="820" width="750" height="79" rx="12" fill="#eee9fb" stroke="#a999d2"/>
+  <text x="500" y="850" text-anchor="middle" class="heading">Day 3 / Facilitator-led Foundry walkthrough</text>
+  <text x="500" y="878" text-anchor="middle" class="body">Scope a read-only pilot: owner, evaluation, and next checkpoint</text>
+</svg>
