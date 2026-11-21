@@ -23,11 +23,11 @@
 | 10:00–10:45 | Fabric concepts: workspace, OneLake, Lakehouse, and Eventhouse | A map of where files, tables, and telemetry live |
 | 10:45–11:00 | Break | |
 | 11:00–11:30 | Facilitator demo: from file to table and query | A working example to follow |
-| 11:30–12:30 | Lakehouse guided build and independent load | Two queryable Lakehouse tables |
+| 11:30–12:30 | Lakehouse build and SQL validation | Two queryable tables and a plant-level quality check |
 | 12:30–13:15 | Lunch | |
 | 13:15–14:30 | Eventhouse build and guided KQL | One KQL database and three verified results |
 | 14:30–14:45 | Break | |
-| 14:45–15:35 | Independent investigation and peer verification | An evidence-backed maintenance recommendation |
+| 14:45–15:35 | Independent investigation and Real-Time Dashboard | A maintenance dashboard or saved query results |
 | 15:35–16:00 | Show what you built and save the Day 2 handoff | Workspace/item names and reproducible evidence |
 
 ### 09:30–11:30 — Understand the flow before building
@@ -38,9 +38,25 @@
 
 ### 11:30 — Build the Lakehouse
 
-1. **Guided (20 min):** Choose **New item > Lakehouse**, name it `MaintenanceLH_<Team>`, and keep Lakehouse schemas enabled. In **Files**, upload `plants.csv`. From the file's **More options**, select **Load to Tables > New table**. Keep `dbo`, name it `plants`, and keep the comma separator and header option enabled. Open **Tables > dbo > plants**. Check `P01`, `P02`, and `P03`.
-2. **Build independently (25 min):** Repeat the upload and table-load steps with `machine_events.csv`, naming the table `machine_events`. In the preview, identify `EventTime`, `PlantId`, `MachineId`, `EventType`, and `Severity`. Explain why one row is an event, not a machine. Make sure both tables appear under **Tables**, not only **Files**.
-3. **Peer check (15 min):** Have a teammate locate both tables without guidance and identify the common key (`PlantId`). If an import is pending or throttled, don't repeatedly upload it. Use the prepared Lakehouse and record the switch; Day 2 needs both tables.
+1. **Guided (15 min):** Choose **New item > Lakehouse**, name it `MaintenanceLH_<Team>`, and keep Lakehouse schemas enabled. In **Files**, upload `plants.csv`. From the file's **More options**, select **Load to Tables > New table**. Keep `dbo`, name it `plants`, and keep the comma separator and header option enabled. Open **Tables > dbo > plants**. Check `P01`, `P02`, and `P03`.
+2. **Build independently (20 min):** Repeat with `machine_events.csv`, naming the table `machine_events`. Identify `EventTime`, `PlantId`, `MachineId`, `EventType`, and `Severity`. Make sure both tables appear under **Tables**, not only **Files**. If an import is pending or throttled, don't repeatedly upload it; use the prepared Lakehouse.
+3. **Validate in SQL (25 min):** Switch the Lakehouse to its **SQL analytics endpoint**, open **New SQL query**, and run the query below. The endpoint lets you query the same tables without copying them or changing the source data. Predict whether Plant East will appear before running. Then change `LEFT JOIN` to `INNER JOIN` and explain the difference to a teammate.
+
+   ```sql
+   SELECT p.PlantId, p.PlantName, COUNT(e.PlantId) AS FaultCount
+   FROM dbo.plants AS p
+   LEFT JOIN dbo.machine_events AS e
+       ON e.PlantId = p.PlantId
+       AND e.EventType = 'Fault'
+       AND e.EventTime >= '2026-11-01T00:00:00'
+       AND e.EventTime <  '2026-11-11T00:00:00'
+   GROUP BY p.PlantId, p.PlantName
+   ORDER BY p.PlantId;
+   ```
+
+   **Check:** North 8, South 8, East 0. The inner join drops East. If tables are still syncing or the SQL endpoint is unavailable, use the prepared endpoint or group the CSV and retain all three plants from the lookup.
+
+   **Fast finish:** Reverse the join: start from `machine_events`, left join `plants` on `PlantId`, and count rows where `p.PlantId IS NULL`. Expect zero unmatched events. Explain how an unmatched event could affect a plant filter in tomorrow's model.
 
 ### 13:15 — Build and query Eventhouse
 
@@ -71,11 +87,11 @@
 
 3. **Check (15 min):** Expect 500 rows; 8 faults per qualifying machine; and 6 High events, all on `MC-N01`. The severity query does not filter on `EventType`. If KQL is unavailable, filter the CSV or use the evidence card and explain how the results would be reproduced.
 
-### 14:45 — Investigate and hand off
+### 14:45 — Investigate, build a dashboard, and hand off
 
-- **Independent build (25 min):** Copy the repeated-fault query into two new tabs. Change the first window to November 1–5 inclusive (`< datetime(2026-11-06)`) and the second to November 6–10 inclusive (`>= datetime(2026-11-06)`). Predict the results before running. Then remove the threshold line in a copy and explain what the threshold changes.
-- **Peer verification (25 min):** Exchange results. Check that both machines go from five to three faults, and verify the earliest High event. Agree which machine to review first and why. Name one question the event data cannot answer.
-- **Handoff (25 min):** In a private team note, record the workspace, Lakehouse and KQL database names, the two query results, one representative event, and your recommendation. Reopen these assets tomorrow; don't start over.
+- **Independent investigation (20 min):** Copy the repeated-fault query into two new tabs. Change the first window to November 1–5 inclusive (`< datetime(2026-11-06)`) and the second to November 6–10 inclusive (`>= datetime(2026-11-06)`). Predict the results, then verify both machines go from five to three faults.
+- **Build a Real-Time Dashboard (30 min):** In a [KQL queryset](https://learn.microsoft.com/en-us/fabric/real-time-intelligence/dashboard-real-time-create) connected to your Day 1 database, run the original repeated-fault query and choose **Save to dashboard > To a new Dashboard**. Name it `MaintenanceReview_<Team>`. Run the High-severity query in another tab and save it to that dashboard as a second tile. Name the tiles **Repeated faults** and **High-severity events**. Verify two groups in the first tile and six events in the second. This is a Fabric Real-Time Dashboard, not a Power BI report or a live feed. If dashboard creation is unavailable, keep the two results in named query tabs or private team notes.
+- **Handoff (25 min):** Ask a teammate to use only your dashboard or query results to recommend a machine, explain the evidence, and name one thing the records cannot prove. Record the workspace and item names, the two results, one representative event, and the recommendation. Reopen these assets tomorrow.
 
 ## Day 2 — Use the same assets to build in Fabric
 
@@ -120,7 +136,9 @@
 2. **Test (25 min):** In **Test the agent's responses**, use the first two prompts below. Compare each answer to the Day 1 query and mark pass, partial, or fail.
 3. **Compare (15 min):** Ask “Which machine is worst?” and compare its answer to the more precise prompt for repeated faults. Discuss what the vague question omitted.
 4. **Retest (30 min):** After lunch, run the remaining three prompts and rewrite one weak prompt to include a date window, exact filters, and output format. Record what changed between answers.
-5. **Explain (20 min):** Exchange scorecards. Decide which result is safe to use and which needs another check. If the agent is unavailable, take turns answering with only the Day 1 evidence and score the answers using the same criteria.
+5. **Explain (20 min):** Exchange scorecards. Use the Day 1 dashboard or saved queries to verify one answer independently and identify an unsupported claim. If the agent is unavailable, take turns answering with only the Day 1 evidence and score the answers using the same criteria.
+
+**Fast finish:** Compare fault counts with fault rates by plant using the same window. In KQL, summarize `TotalEvents = count(), Faults = countif(EventType == "Fault") by PlantId`, then calculate `FaultRatePct = round(100.0 * Faults / TotalEvents, 2)` with `extend`. Explain why a fault rate does not replace the severity evidence. If the dashboard is available, add the result as a third tile.
 
 | Prompt (use November 1–10, 2026 UTC) | Check before accepting |
 |---|---|
@@ -178,6 +196,8 @@ Draft privately for 30 minutes, exchange plans for 20 minutes, then revise for 1
 |---|---|
 | Lakehouse inputs | Three plants; `P01` is Plant North, `P02` Plant South, `P03` Plant East. |
 | KQL sample | 500 events: 484 Run and 16 Fault. |
+| SQL validation | Plant North 8, Plant South 8, Plant East 0; zero unmatched event plant IDs. |
+| Fault-rate extension | North 8/169 (4.73%); South 8/170 (4.71%); East 0/161 (0%). |
 | November 1–10 UTC | `P01 / MC-N01`: 8 faults; `P02 / MC-S01`: 8 faults. |
 | First vs. second five-day windows | Both machines: 5 then 3 faults. |
 | Severity | 6 High events, all on `MC-N01`; first at `2026-11-01 00:00 UTC`. |
