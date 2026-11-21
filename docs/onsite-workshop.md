@@ -30,7 +30,7 @@ Complete these checks on the laptop you'll use for the workshop. Fabric and GitH
 
 The screenshot shows the event join page. Get the **scannable QR code and active join code** from the organizer at the event or in the private attendee channel; the public screenshot masks them.
 
-![Event join page showing where to scan the QR code, sign in to GitHub, and enter the join code. The live QR code and join code are masked.](assets/copilot-event-join.png)
+![Event join page showing where to scan the QR code, sign in to GitHub, and enter the join code. The live QR code and join code are masked.](../assets/copilot-event-join.png)
 
 1. **Choose your GitHub account.** The event join page asks for a **personal GitHub account**. If you want to use a **Bosch-managed GitHub account**, use it only if the organizer confirms it is supported for this event. Your Bosch work email or Fabric sign-in alone is not a GitHub account. If a different GitHub account is already signed in, switch accounts before joining.
 2. **Open the join page.** Scan the organizer's QR code with your phone. If you can't scan it, ask for the private join link and open it on your laptop.
