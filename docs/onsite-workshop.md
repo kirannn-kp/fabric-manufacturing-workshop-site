@@ -93,6 +93,17 @@
 - **Build a Real-Time Dashboard (30 min):** In a [KQL queryset](https://learn.microsoft.com/en-us/fabric/real-time-intelligence/dashboard-real-time-create) connected to your Day 1 database, run the original repeated-fault query and choose **Save to dashboard > To a new Dashboard**. Name it `MaintenanceReview_<Team>`. Run the High-severity query in another tab and save it to that dashboard as a second tile. Name the tiles **Repeated faults** and **High-severity events**. Verify two groups in the first tile and six events in the second. This is a Fabric Real-Time Dashboard, not a Power BI report or a live feed. If dashboard creation is unavailable, keep the two results in named query tabs or private team notes.
 - **Handoff (25 min):** Ask a teammate to use only your dashboard or query results to recommend a machine, explain the evidence, and name one thing the records cannot prove. Record the workspace and item names, the two results, one representative event, and the recommendation. Reopen these assets tomorrow.
 
+### Optional Day 1 lab — Make ingestion repeatable (30–45 min)
+
+Do this after the core handoff is ready. Use the same synthetic CSV already in your team Lakehouse; no external connector is needed.
+
+1. Create a **Data pipeline** named `MaintenanceLoad_<Team>` and add a **Copy data** activity. In **Source**, select the team Lakehouse, use **Files**, and browse to `machine_events.csv`. Choose **DelimitedText**, comma delimiter, and **First row as header**. Preview the source and confirm columns such as `EventTime` and `MachineId` are separate.
+2. In **Destination**, select the same Lakehouse, choose **Tables**, and use a new practice table named `machine_events_pipeline_<team>` (replace `<team>` with a lowercase team identifier). Choose **Overwrite** as the table action. Verify the target isn't the core `machine_events` table. Check the column mapping before running.
+3. Save and run manually. Open the activity output or run history and verify the run succeeded and copied **500 rows**. In the Lakehouse SQL analytics endpoint, check `COUNT(*)` in the practice table after it appears. Run the pipeline a second time and confirm the table still has **500**, not **1,000**. Record both run results and explain why **Append** would behave differently.
+4. Leave the pipeline unscheduled. If creation, connection, or table creation is blocked, keep the manual Lakehouse import as the core path and review a facilitator run rather than retrying on the shared core tables.
+
+[Microsoft Learn: Configure a Lakehouse Copy activity](https://learn.microsoft.com/en-us/fabric/data-factory/connector-lakehouse-copy-activity)
+
 ## Day 2 — Use the same assets to build in Fabric
 
 | Time | Activity | What you leave with |
@@ -161,6 +172,24 @@
 3. **Decide (10 min):** Write a one-sentence handoff: which machine should the lead review first, what is the supporting evidence, and what still needs a human decision?
 4. **Showcase (15 min):** Share your model or read-only result, one checked Data Agent answer, and the rule decision. Carry those three items into Day 3.
 
+### Optional Day 2 lab — Add a dashboard plant selector (20–30 min)
+
+Use your team's Day 1 Real-Time Dashboard, not a shared facilitator item. Keep the historical UTC window in both tile queries.
+
+1. In **Editing**, open **Parameters** and add a visible **Single selection** parameter. Set **Label** to `Plant`, **Variable name** to `_plant`, **Data type** to **String**, and **Source** to **Fixed values**. Add `All`, `P01`, and `P02`, with `All` as the default. Use the literal `All` choice rather than a generated **Select all** option.
+2. For each tile, choose **Tile actions > Edit**. In the query, insert the following after the date filter and before `summarize` or `project`. Select **Apply** on each tile, then **Save** on the dashboard.
+
+   ```kusto
+   | where _plant == "All" or PlantId == _plant
+   ```
+
+3. Reopen the dashboard and check the three choices: **P01** shows **8 faults and 6 High events**; **P02** shows **8 faults and no High rows**; **All** restores **two fault groups and six High rows**. Explain why the High tile is empty for P02 even though that plant has faults.
+4. If dashboard editing or saving is unavailable, run the same checks in KQL tabs using `| where PlantId == "P01"` or `| where PlantId == "P02"` before aggregation or projection. For All, remove the plant filter.
+
+[Microsoft Learn: Use parameters in Real-Time Dashboard queries](https://learn.microsoft.com/en-us/fabric/real-time-intelligence/dashboard-parameters)
+
+If your team finishes early on either Fabric day, you can also pick one exercise from **Optional Fabric reserve labs** at the end of this guide.
+
 ## Day 3 — Foundry walkthrough and PoC, finish at 14:00
 
 | Time | Activity | What you leave with |
@@ -206,5 +235,58 @@ Draft privately for 30 minutes, exchange plans for 20 minutes, then revise for 1
 If you used a fallback, label the result **prepared item**, **CSV check**, or **walkthrough**. That is valid workshop evidence, but it is not a live product test.
 
 - [Synthetic data inventory](../data/validation-summary.md)
+
+## Optional Fabric reserve labs
+
+Pick at most one at a time. These are not prerequisites or PoC deliverables. Use only the workshop's synthetic data or the built-in Eventstream sample. If a feature is unavailable, stop after 10 minutes of setup troubleshooting and return to the core evidence or the fault-rate stretch.
+
+### OneLake shortcut — Reuse a table without copying it (15–25 min)
+
+1. Create a separate Lakehouse called `MaintenanceReuse_<Team>` in your workshop workspace. Under **Tables** (or the `dbo` schema), choose **New shortcut** or **New table shortcut**.
+2. Choose **Microsoft OneLake** as the internal source. Browse to your Day 1 Lakehouse and select its `plants` Delta table, not the CSV under Files. Create the shortcut using the default identity.
+3. Preview the shortcut table or query it in the second Lakehouse. Expect **three plants**. Explain which Lakehouse owns the data and why the shortcut is not a second copy. Do not edit the source table or change sharing to make this exercise work.
+
+[Microsoft Learn: Create a OneLake shortcut](https://learn.microsoft.com/en-us/fabric/onelake/shortcuts/create-onelake-shortcut)
+
+### Fabric notebook — Check data quality and publish a summary (25–40 min)
+
+Create a **Notebook**, attach your Day 1 Lakehouse as the default, and run each block in a separate cell. These checks are for the complete synthetic incident file. If your notebook requires schema qualification, prefix the table names with `dbo.` in a schema-enabled Lakehouse.
+
+```sql
+%%sql
+SELECT COUNT(*) AS TotalEvents FROM machine_events
+```
+
+```sql
+%%sql
+SELECT COUNT(*) AS UnmatchedPlantRows
+FROM machine_events AS e
+LEFT ANTI JOIN plants AS p ON e.PlantId = p.PlantId
+```
+
+Expect **500** and **0**. If those checks pass, replace `team` in the table name below with your lowercase team identifier before running. This writes only to a new practice table. If it already exists, use a new practice name rather than changing a core table.
+
+```sql
+%%sql
+CREATE TABLE plant_fault_summary_team USING DELTA AS
+SELECT p.PlantId,
+       COUNT(e.PlantId) AS TotalEvents,
+       SUM(CASE WHEN e.EventType = 'Fault' THEN 1 ELSE 0 END) AS Faults
+FROM plants AS p
+LEFT JOIN machine_events AS e ON e.PlantId = p.PlantId
+GROUP BY p.PlantId
+```
+
+Preview the output table and reconcile it against Day 1 SQL: **P01: 169 events / 8 faults; P02: 170 / 8; P03: 161 / 0**. If Spark is unavailable, use the Day 1 SQL endpoint to reproduce the counts without creating a table.
+
+[Microsoft Learn: Develop and run Fabric notebooks](https://learn.microsoft.com/en-us/fabric/data-engineering/author-execute-notebook)
+
+### Eventstream — Preview a live feed (10–15 min, facilitator demo)
+
+1. In a separate demo Eventstream, choose **Use sample data**, select **Bicycles**, and add the source. Publish the demo stream if needed, then select the stream on the canvas and open **Data preview**. Point out a few incoming records and their fields.
+2. Explain where a filter and an Eventhouse destination would sit in the flow. Contrast this live preview with the fixed CSV the teams queried. This is a streaming demo, not evidence for the maintenance decision.
+3. Do not connect the sample to the workshop database, add actions, or use live equipment. Remove the disposable demo stream afterward if you created it for this exercise. If preview isn't available, sketch the flow instead.
+
+[Microsoft Learn: Add sample data to an Eventstream](https://learn.microsoft.com/en-us/fabric/real-time-intelligence/event-streams/add-source-sample-data)
 - [Microsoft Fabric documentation](https://learn.microsoft.com/en-us/fabric/)
 - [Microsoft Foundry documentation](https://learn.microsoft.com/en-us/azure/foundry/)
