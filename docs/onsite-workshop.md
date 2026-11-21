@@ -4,23 +4,40 @@
 
 ## Prerequisites and downloads
 
-- **Laptop:** Bring a charger and use Microsoft Edge or Google Chrome. Check sign-in to [Microsoft Fabric](https://app.fabric.microsoft.com/) and Microsoft Teams if your group uses it for collaboration.
-- **Workspace:** Open the Fabric workspace shared by the organizer in the correct tenant. Check that you can see **New item** and have permission to create and edit items. At least one person per team needs working edit access on an active Fabric capacity. Pair with that person if you have read-only access. Keep using the same workspace and item names on both Fabric days.
-- **Features:** Confirm access to Lakehouse, Eventhouse, and a semantic model. Data Agent, model editing, ontology, and Operations Agent depend on the environment. Use the fallback in the relevant lab if a feature is unavailable. The facilitator shares prepared items privately.
-- **Files:** Download [plants.csv](../data/plants.csv) and [machine_events.csv](../data/machine_events.csv). Save them as `.csv`, not `.csv.txt`. The data is synthetic; there is no live SAP connection or data preparation before class. No VS Code, Power BI Desktop, or report authoring is required for the Fabric labs.
-- **Day 3:** No participant Foundry account, Azure subscription, or deployment is required. The facilitator leads the walkthrough.
-- **If blocked:** Tell the facilitator privately which product and step failed, the exact error, and the time. Include a screenshot with sensitive information redacted. Switch to the prepared item or evidence card rather than waiting through the lab.
+Complete these checks on the laptop you'll use for the workshop. Fabric and GitHub are separate sign-ins.
 
-**Team setup:** One driver uses Fabric, one person verifies the result, and one records the evidence. Rotate roles between labs. Keep your notes and workspace links private.
+### 1. Check your Fabric access
+
+1. Bring your laptop and charger. Open [Microsoft Fabric](https://app.fabric.microsoft.com/) in Edge or Chrome and sign in with the **work or school account that was granted Fabric access**. Use the organizer's tenant and workspace link. Check Teams separately if your group is using it.
+2. In the workshop workspace, open **New item**. Check that **Lakehouse** and **Eventhouse** are available. You don't need to create test items before class. At least one person per team needs permission to create and edit items in a workspace on active Fabric capacity.
+3. If the workspace is missing, check that you're using the invited account and the right tenant. If you can view but not create items, pair with a teammate who has edit access. Use the lab's fallback if a feature such as model editing, Data Agent, ontology, or Operations Agent is unavailable.
+4. Keep the same workspace and item names on Day 2. No VS Code, Power BI Desktop, or report authoring is required for the Fabric labs. Day 3 is facilitator-led; participants don't need a Foundry account or Azure subscription.
+
+### 2. Download and check the workshop data
+
+1. Create a folder you can find easily, such as `Downloads\FabricWorkshop`.
+2. Save both files below into that folder. If a link opens as plain text, use **Save As** (`Ctrl+S`) or right-click the link and choose **Save link as**. Keep the exact `.csv` filenames, not `.csv.txt` or `.xlsx`.
+
+   | Download | What it contains | Where you'll use it |
+   |---|---|---|
+   | [plants.csv](../data/plants.csv) | 3 plant records; look for `PlantId` and `PlantName` | Day 1 Lakehouse |
+   | [machine_events.csv](../data/machine_events.csv) | 500 event records; look for `EventTime`, `PlantId`, `MachineId`, `EventType`, and `Severity` | Day 1 Lakehouse **and** Eventhouse |
+
+3. Open each file in a plain-text editor to confirm the first line contains comma-separated column names, not an HTML page. Close without editing. The counts above exclude the header row.
+4. Wait for the Day 1 lab to upload the files. They contain synthetic data; you don't need to clean them, connect to SAP, or bring real plant data.
 
 ### Get GitHub Copilot access
 
-1. On your phone, scan the event QR code shared by the organizer.
-2. Sign in with your **personal GitHub account**. This is separate from your Fabric sign-in.
-3. Enter the organizer's join code and select **Join**. If GitHub sends you an organization invitation, accept it using the same account.
-4. On your laptop, sign in with that same account and open [GitHub Copilot settings](https://github.com/settings/copilot) to check access. If it is missing, ask the organizer privately to check your membership and Copilot seat.
+The screenshot shows the event join page. Get the **scannable QR code and active join code** from the organizer at the event or in the private attendee channel; the public screenshot masks them.
 
-Don't post the QR code or join code. If Copilot access is pending, start the Fabric labs anyway; they don't require Copilot.
+![Event join page showing where to scan the QR code, sign in to GitHub, and enter the join code. The live QR code and join code are masked.](assets/copilot-event-join.png)
+
+1. **Choose your GitHub account.** The event join page asks for a **personal GitHub account**. If you want to use a **Bosch-managed GitHub account**, use it only if the organizer confirms it is supported for this event. Your Bosch work email or Fabric sign-in alone is not a GitHub account. If a different GitHub account is already signed in, switch accounts before joining.
+2. **Open the join page.** Scan the organizer's QR code with your phone. If you can't scan it, ask for the private join link and open it on your laptop.
+3. **Sign in and join.** Sign in to GitHub with the account you chose, enter the organizer's current join code, and select **Join**. If GitHub sends an organization invitation, accept it using the **same GitHub account**.
+4. **Check Copilot access.** On your laptop, sign in to GitHub with that same account and open [GitHub Copilot settings](https://github.com/settings/copilot). If the event access doesn't appear, send the organizer your **GitHub username** privately so they can check the invitation and seat assignment. Don't share a password or verification code.
+
+**Ready to start?** One teammate should be able to create Fabric items, and the team should have both CSVs. If something is blocked, tell the facilitator privately which step failed and the exact error. Use the prepared Fabric item or evidence card if needed. You can start the Fabric labs while Copilot access is pending. Rotate who builds, checks the results, and records the evidence.
 
 ## What we're solving — problem and architecture
 

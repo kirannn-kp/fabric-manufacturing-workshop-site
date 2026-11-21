@@ -25,12 +25,11 @@ Check that you can sign in to:
 
 ## Workshop data
 
-You do not need to prepare data.
-Microsoft will provide the datasets and starter material.
+Download the two synthetic CSVs and check the filenames and headers using the [dataset steps](onsite-workshop.md#2-download-and-check-the-workshop-data). No cleaning or SAP connection is needed.
 
 ## GitHub
 
-GitHub is used to open or download the workshop instructions. For event-provided Copilot access, follow the [sign-up steps](onsite-workshop.md#get-github-copilot-access) in the onsite guide. The Fabric labs can run without Copilot.
+For event-provided Copilot access, follow the [screenshot and sign-up steps](onsite-workshop.md#get-github-copilot-access) in the onsite guide. Use the personal GitHub account requested by the join page unless the organizer confirms that your Bosch-managed GitHub account is supported. The Fabric labs can run without Copilot.
 
 ## Microsoft Foundry
 
