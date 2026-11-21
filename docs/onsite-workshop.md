@@ -97,8 +97,8 @@
 
 Do this after the core handoff is ready. Use the same synthetic CSV already in your team Lakehouse; no external connector is needed.
 
-1. Create a **Data pipeline** named `MaintenanceLoad_<Team>` and add a **Copy data** activity. In **Source**, select the team Lakehouse, use **Files**, and browse to `machine_events.csv`. Choose **DelimitedText**, comma delimiter, and **First row as header**. Preview the source and confirm columns such as `EventTime` and `MachineId` are separate.
-2. In **Destination**, select the same Lakehouse, choose **Tables**, and use a new practice table named `machine_events_pipeline_<team>` (replace `<team>` with a lowercase team identifier). Choose **Overwrite** as the table action. Verify the target isn't the core `machine_events` table. Check the column mapping before running.
+1. Create a **Pipeline** (also called **Data pipeline**) named `MaintenanceLoad_<Team>`. On the ribbon, choose **Copy data > Add copy data activity**. In **Source**, use **Connection > Browse all > OneLake catalog** to select your team Lakehouse. Choose **Files**, then browse to `machine_events.csv`. Choose **DelimitedText**, comma delimiter, and **First row as header**. Preview the source and confirm columns such as `EventTime` and `MachineId` are separate.
+2. In **Destination**, use **Connection > Browse all > OneLake catalog** to select the same Lakehouse. Choose **Tables > New** and use a new practice table named `machine_events_pipeline_<team>` (replace `<team>` with a lowercase team identifier). Choose **Overwrite** as the table action. Verify the target isn't the core `machine_events` table. Check the column mapping before running.
 3. Save and run manually. Open the activity output or run history and verify the run succeeded and copied **500 rows**. In the Lakehouse SQL analytics endpoint, check `COUNT(*)` in the practice table after it appears. Run the pipeline a second time and confirm the table still has **500**, not **1,000**. Record both run results and explain why **Append** would behave differently.
 4. Leave the pipeline unscheduled. If creation, connection, or table creation is blocked, keep the manual Lakehouse import as the core path and review a facilitator run rather than retrying on the shared core tables.
 
@@ -176,8 +176,8 @@ Do this after the core handoff is ready. Use the same synthetic CSV already in y
 
 Use your team's Day 1 Real-Time Dashboard, not a shared facilitator item. Keep the historical UTC window in both tile queries.
 
-1. In **Editing**, open **Parameters** and add a visible **Single selection** parameter. Set **Label** to `Plant`, **Variable name** to `_plant`, **Data type** to **String**, and **Source** to **Fixed values**. Add `All`, `P01`, and `P02`, with `All` as the default. Use the literal `All` choice rather than a generated **Select all** option.
-2. For each tile, choose **Tile actions > Edit**. In the query, insert the following after the date filter and before `summarize` or `project`. Select **Apply** on each tile, then **Save** on the dashboard.
+1. In **Editing**, choose **Add parameter** and add a visible **Single selection** parameter. Set **Label** to `Plant`, **Variable name** to `_plant`, **Data type** to **String**, and **Source** to **Fixed values**. Add `All`, `P01`, and `P02`, with `All` as the default. Use the literal `All` choice rather than a generated **Select all** option. Select **Done**.
+2. For each tile, choose **Tile actions > Edit**. If the menu is hard to click, focus **Tile actions** and press Enter. In the query, insert the following after the date filter and before `summarize` or `project`. Select **Run** and check the result before selecting **Apply**. Then **Save** on the dashboard and confirm **Save changes** if prompted.
 
    ```kusto
    | where _plant == "All" or PlantId == _plant
@@ -242,15 +242,15 @@ Pick at most one at a time. These are not prerequisites or PoC deliverables. Use
 
 ### OneLake shortcut — Reuse a table without copying it (15–25 min)
 
-1. Create a separate Lakehouse called `MaintenanceReuse_<Team>` in your workshop workspace. Under **Tables** (or the `dbo` schema), choose **New shortcut** or **New table shortcut**.
-2. Choose **Microsoft OneLake** as the internal source. Browse to your Day 1 Lakehouse and select its `plants` Delta table, not the CSV under Files. Create the shortcut using the default identity.
+1. Create a separate Lakehouse called `MaintenanceReuse_<Team>` in your workshop workspace. In the Lakehouse explorer, open the `dbo` schema's **More options > New table shortcut**. If your Lakehouse has no schemas, use the **Tables** menu instead of the generic shortcut card.
+2. Choose **Microsoft OneLake** as the internal source. Select your Day 1 Lakehouse, keep **Passthrough identity**, and select **Connect** if prompted. Expand **Tables > dbo** in the source picker and select the `plants` Delta table, not the CSV under Files. Choose **Next > Create** and check that the shortcut succeeded.
 3. Preview the shortcut table or query it in the second Lakehouse. Expect **three plants**. Explain which Lakehouse owns the data and why the shortcut is not a second copy. Do not edit the source table or change sharing to make this exercise work.
 
 [Microsoft Learn: Create a OneLake shortcut](https://learn.microsoft.com/en-us/fabric/onelake/shortcuts/create-onelake-shortcut)
 
 ### Fabric notebook — Check data quality and publish a summary (25–40 min)
 
-Create a **Notebook**, attach your Day 1 Lakehouse as the default, and run each block in a separate cell. These checks are for the complete synthetic incident file. If your notebook requires schema qualification, prefix the table names with `dbo.` in a schema-enabled Lakehouse.
+Create a **Notebook**. In the explorer, use **Add data items > From OneLake catalog** to attach your Day 1 Lakehouse as the default. Run each block in a separate cell. These checks are for the complete synthetic incident file. If your notebook requires schema qualification, prefix the table names with `dbo.` in a schema-enabled Lakehouse.
 
 ```sql
 %%sql
