@@ -101,7 +101,7 @@ The event file is loaded twice on purpose: the Lakehouse copy supports SQL and t
 
 **What you'll do:** Turn two CSVs into tables and check fault totals by plant. **Microsoft Learn:** [Lakehouse overview](https://learn.microsoft.com/en-us/fabric/data-engineering/lakehouse-overview), [Load files to tables](https://learn.microsoft.com/en-us/fabric/data-engineering/load-to-tables), and [Use the SQL analytics endpoint](https://learn.microsoft.com/en-us/fabric/data-engineering/lakehouse-sql-analytics-endpoint).
 
-1. **Guided (15 min):** Choose **New item > Lakehouse**, name it `MaintenanceLH_<LabID>` (for example, `MaintenanceLH_lab07`), and keep Lakehouse schemas enabled. In **Files**, upload `plants.csv`. From the file's **More options**, select **Load to Tables > New table**. Keep `dbo`, name it `plants`, and keep the comma separator and header option enabled. Open **Tables > dbo > plants**. Check `P01`, `P02`, and `P03`.
+1. **Guided (15 min):** Choose **New item > Lakehouse**, name it `MaintenanceLH_<LabID>` (for example, `MaintenanceLH_lab07`), and keep Lakehouse schemas enabled. Use the lab ID you chose in place of `lab07`. In **Files**, upload `plants.csv`. From the file's **More options**, select **Load to Tables > New table**. Keep `dbo`, name it `plants`, and keep the comma separator and header option enabled. Open **Tables > dbo > plants**. Check `P01`, `P02`, and `P03`.
 2. **Build independently (20 min):** Repeat with `machine_events.csv`, naming the table `machine_events`. Identify `EventTime`, `PlantId`, `MachineId`, `EventType`, and `Severity`. Make sure both tables appear under **Tables**, not only **Files**. If an import is pending or throttled, don't repeatedly upload it; use the prepared Lakehouse.
 3. **Validate in SQL (25 min):** Switch the Lakehouse to its **SQL analytics endpoint**, open **New SQL query**, and run the query below. The endpoint lets you query the same tables without copying them or changing the source data. Predict whether Plant East will appear before running. Then change `LEFT JOIN` to `INNER JOIN` and note what changed and why.
 
@@ -125,8 +125,8 @@ The event file is loaded twice on purpose: the Lakehouse copy supports SQL and t
 
 **What you'll do:** Load the event file into a KQL database to compare machines within one time window. **Microsoft Learn:** [What is an Eventhouse?](https://learn.microsoft.com/en-us/fabric/real-time-intelligence/eventhouse), [Ingest a local file](https://learn.microsoft.com/en-us/fabric/real-time-intelligence/get-data-local-file), and [KQL reference](https://learn.microsoft.com/en-us/kusto/query/?view=microsoft-fabric).
 
-1. **Set up (25 min):** Choose **New item > Eventhouse**, name it `MaintenanceEvents_<LabID>`, and open its KQL database. Select **Get data > Local file > New table**. Upload `machine_events.csv`, name the table `machine_events`, choose CSV with **First row header**, and confirm `EventTime` is datetime. Finish and wait. If using a prepared KQL database, skip the upload. Do not ingest twice.
-2. **Query (35 min):** Open **Query > Query with code**. Paste one block per tab and select **Run**. Write down the UTC window, filters, and each result.
+1. **Set up (25 min):** Choose **New item > Eventhouse** and name it `MaintenanceEvents_<LabID>` (for example, `MaintenanceEvents_lab07`). Use the lab ID you chose in place of `lab07`. Open its KQL database and select **Get data > Local file > New table**. Upload `machine_events.csv`, name the table `machine_events`, choose CSV with **First row header**, and confirm `EventTime` is datetime. Finish and wait. If using a prepared KQL database, skip the upload. Do not ingest twice.
+2. **Query (35 min):** Open **Query > Query with code**. If you save a KQL queryset, name it `MaintenanceQueries_<LabID>` (for example, `MaintenanceQueries_lab07`). Use the lab ID you chose in place of `lab07`. Paste one block per tab and select **Run**. Write down the UTC window, filters, and each result.
 
    ```kusto
    machine_events
@@ -157,7 +157,7 @@ The event file is loaded twice on purpose: the Lakehouse copy supports SQL and t
 **Microsoft Learn:** [Create a Real-Time Dashboard from a KQL query](https://learn.microsoft.com/en-us/fabric/real-time-intelligence/dashboard-real-time-create).
 
 - **Independent investigation (20 min):** Copy the repeated-fault query into two new tabs. Change the first window to November 1–5 inclusive (`< datetime(2026-11-06)`) and the second to November 6–10 inclusive (`>= datetime(2026-11-06)`). Predict the results, then verify both machines go from five to three faults.
-- **Build a Real-Time Dashboard (30 min):** In a KQL queryset connected to your Day 1 database, run the original repeated-fault query and choose **Save to dashboard > To a new Dashboard**. Name it `MaintenanceReview_<LabID>`. Run the High-severity query in another tab and save it to that dashboard as a second tile. Name the tiles **Repeated faults** and **High-severity events**. Verify two groups in the first tile and six events in the second. This is a Fabric Real-Time Dashboard, not a Power BI report or a live feed. If dashboard creation is unavailable, keep the two results in named query tabs or private notes.
+- **Build a Real-Time Dashboard (30 min):** In a KQL queryset connected to your Day 1 database, run the original repeated-fault query and choose **Save to dashboard > To a new Dashboard**. Name it `MaintenanceReview_<LabID>` (for example, `MaintenanceReview_lab07`). Use the lab ID you chose in place of `lab07`. Run the High-severity query in another tab and save it to that dashboard as a second tile. Name the tiles **Repeated faults** and **High-severity events**. Verify two groups in the first tile and six events in the second. This is a Fabric Real-Time Dashboard, not a Power BI report or a live feed. If dashboard creation is unavailable, keep the two results in named query tabs or private notes.
 - **Handoff (25 min):** Use only your dashboard or query results to recommend a machine, explain the evidence, and name one thing the records cannot prove. If working with someone, have them check your reasoning. Record the workspace and item names, the two results, one representative event, and the recommendation. Reopen these assets tomorrow.
 
 **Day 1 checkpoint:** Show both Lakehouse tables, the 500-row KQL check, and the two incident results in the dashboard or saved queries. Record enough detail for someone else to reproduce your results.
@@ -166,8 +166,8 @@ The event file is loaded twice on purpose: the Lakehouse copy supports SQL and t
 
 Do this after the core handoff is ready. Use the same synthetic CSV already in your Day 1 Lakehouse; no external connector is needed.
 
-1. Create a **Pipeline** (also called **Data pipeline**) named `MaintenanceLoad_<LabID>` (for example, `MaintenanceLoad_lab07`). Choose your own lab ID and use it in place of `lab07`. On the ribbon, choose **Copy data > Add copy data activity**. In **Source**, use **Connection > Browse all > OneLake catalog** to select your Day 1 Lakehouse. Choose **Files**, then browse to `machine_events.csv`. Choose **DelimitedText**, comma delimiter, and **First row as header**. Preview the source and confirm columns such as `EventTime` and `MachineId` are separate.
-2. In **Destination**, use **Connection > Browse all > OneLake catalog** to select the same Lakehouse. Choose **Tables > New** and use a new practice table named `machine_events_pipeline_<LabID>` (for example, `machine_events_pipeline_lab07`). Choose **Overwrite** as the table action. Verify the target isn't the core `machine_events` table. Check the column mapping before running.
+1. Create a **Pipeline** (also called **Data pipeline**) named `MaintenanceLoad_<LabID>` (for example, `MaintenanceLoad_lab07`). Use the lab ID you chose in place of `lab07`. On the ribbon, choose **Copy data > Add copy data activity**. In **Source**, use **Connection > Browse all > OneLake catalog** to select your Day 1 Lakehouse. Choose **Files**, then browse to `machine_events.csv`. Choose **DelimitedText**, comma delimiter, and **First row as header**. Preview the source and confirm columns such as `EventTime` and `MachineId` are separate.
+2. In **Destination**, use **Connection > Browse all > OneLake catalog** to select the same Lakehouse. Choose **Tables > New** and use a new practice table named `machine_events_pipeline_<LabID>` (for example, `machine_events_pipeline_lab07`). Use the lab ID you chose in place of `lab07`. Choose **Overwrite** as the table action. Verify the target isn't the core `machine_events` table. Check the column mapping before running.
 3. Save and run manually. Open the activity output or run history and verify the run succeeded and copied **500 rows**. In the Lakehouse SQL analytics endpoint, check `COUNT(*)` in the practice table after it appears. Run the pipeline a second time and confirm the table still has **500**, not **1,000**. Record both run results and explain why **Append** would behave differently.
 4. Leave the pipeline unscheduled. If creation, connection, or table creation is blocked, keep the manual Lakehouse import as the core path and review a facilitator run rather than retrying on the shared core tables.
 
@@ -202,7 +202,7 @@ Do this after the core handoff is ready. Use the same synthetic CSV already in y
 **What you'll do:** Cross-check the fault totals from the Lakehouse copy, without building a report. **Microsoft Learn:** [Direct Lake overview](https://learn.microsoft.com/en-us/fabric/fundamentals/direct-lake-overview), [DAX query view](https://learn.microsoft.com/en-us/power-bi/transform-model/dax-query-view), and [Edit model relationships and measures](https://learn.microsoft.com/en-us/power-bi/transform-model/service-edit-data-models).
 
 1. **Reopen (10 min):** Locate yesterday's `plants` and `machine_events` Lakehouse tables and rerun the repeated-fault KQL against yesterday's database. The model will use the Lakehouse copy; the Data Agent will use the KQL copy. This lab does not require connecting the Data Agent to the semantic model.
-2. **Create (15 min):** In the Lakehouse choose **New semantic model**, name it `MaintenanceModel_<LabID>`, select only `plants` and `machine_events`, and confirm. If creation is blocked by licensing or permissions, open the prepared two-table model. No report is needed.
+2. **Create (15 min):** In the Lakehouse choose **New semantic model** and name it `MaintenanceModel_<LabID>` (for example, `MaintenanceModel_lab07`). Use the lab ID you chose in place of `lab07`. Select only `plants` and `machine_events`, and confirm. If creation is blocked by licensing or permissions, open the prepared two-table model. No report is needed.
 3. **Validate (20 min):** Open **DAX query view > New query**, paste the following, and select **Run**. It works in Viewing mode and does not change the model. Check 8 faults per machine, then replace `"Fault"` with `"Run"` and compare the totals.
 
    ```dax
@@ -227,7 +227,7 @@ Do this after the core handoff is ready. Use the same synthetic CSV already in y
 
 **What you'll do:** Test a draft that answers questions from your KQL database. Treat query results as the reference, not the draft's wording. **Microsoft Learn:** [Create and test a Fabric Data Agent](https://learn.microsoft.com/en-us/fabric/data-science/how-to-create-data-agent).
 
-1. **Connect (15 min):** Choose **New item > Data agent**. In the draft, choose **Add a data source**, select your Day 1 **KQL database**, not the Eventhouse container, and select **Add**. Under **Explorer > Sources > Tables**, check `machine_events`. Keep the agent a draft.
+1. **Connect (15 min):** Choose **New item > Data agent** and name it `MaintenanceDataAgent_<LabID>` (for example, `MaintenanceDataAgent_lab07`). Use the lab ID you chose in place of `lab07`. In the draft, choose **Add a data source**, select your Day 1 **KQL database**, not the Eventhouse container, and select **Add**. Under **Explorer > Sources > Tables**, check `machine_events`. Keep the agent a draft.
 2. **Test (15 min):** In **Test the agent's responses**, use the first two prompts below. Compare each answer to the Day 1 query and mark pass, partial, or fail.
 3. **Compare (5 min):** Ask “Which machine is worst?” and compare its answer to the more precise prompt for repeated faults. Discuss what the vague question omitted.
 4. **Retest (15 min):** Run the remaining three prompts and rewrite one weak prompt to include a date window, exact filters, and output format. Record what changed between answers.
@@ -255,7 +255,7 @@ Do this after the core handoff is ready. Use the same synthetic CSV already in y
 
 **Microsoft Learn:** [Operations Agent and playbooks](https://learn.microsoft.com/en-us/fabric/real-time-intelligence/operations-agent). Read about rules and playbooks; skip instructions to start the agent or configure actions.
 
-1. **Inspect (15 min):** Open the facilitator's stopped Operations Agent, connected to the synthetic Day 1 KQL database or a prepared copy with the same data. If explicitly enabled for the lab, follow along by creating a test item, adding that database under **Knowledge**, and saving instructions to group `Fault` events by plant and machine, flag 3+ in the evaluated UTC window, and recommend human review only. Generate or open the playbook. Keep it stopped; configure no actions. If unavailable, annotate the rule in your notes.
+1. **Inspect (15 min):** Open the facilitator's stopped Operations Agent, connected to the synthetic Day 1 KQL database or a prepared copy with the same data. If explicitly enabled for the lab, create a test item named `MaintenanceOpsAgent_<LabID>` (for example, `MaintenanceOpsAgent_lab07`). Use the lab ID you chose in place of `lab07`. Add that database under **Knowledge** and save instructions to group `Fault` events by plant and machine, flag 3+ in the evaluated UTC window, and recommend human review only. Generate or open the playbook. Keep it stopped; configure no actions. If unavailable, annotate the rule in your notes.
 2. **Replay (20 min):** Use the Day 1 reference query at `>= 3`, `>= 8`, and `>= 9`. Check two machines qualify at both 3 and 8, and none at 9. The replay checks the rule against historical data, not scheduling or notifications. Explain why High severity is a separate signal for ranking.
 3. **Decide (10 min):** Write a one-sentence handoff: which machine should the lead review first, what is the supporting evidence, and what still needs a human decision?
 4. **Showcase (15 min):** Share your model or read-only result, one checked Data Agent answer, and the rule decision. Carry those three items into Day 3.
@@ -336,7 +336,7 @@ Pick at most one at a time. These are not prerequisites or PoC deliverables. Use
 
 ### OneLake shortcut — Reuse a table without copying it (15–25 min)
 
-1. Create a separate Lakehouse called `MaintenanceReuse_<LabID>` in your workshop workspace. In the Lakehouse explorer, open the `dbo` schema's **More options > New table shortcut**. If your Lakehouse has no schemas, use the **Tables** menu instead of the generic shortcut card.
+1. Create a separate Lakehouse called `MaintenanceReuse_<LabID>` (for example, `MaintenanceReuse_lab07`) in your workshop workspace. Use the lab ID you chose in place of `lab07`. In the Lakehouse explorer, open the `dbo` schema's **More options > New table shortcut**. If your Lakehouse has no schemas, use the **Tables** menu instead of the generic shortcut card.
 2. Choose **Microsoft OneLake** as the internal source. Select your Day 1 Lakehouse, keep **Passthrough identity**, and select **Connect** if prompted. Expand **Tables > dbo** in the source picker and select the `plants` Delta table, not the CSV under Files. Choose **Next > Create** and check that the shortcut succeeded.
 3. Preview the shortcut table or query it in the second Lakehouse. Expect **three plants**. Explain which Lakehouse owns the data and why the shortcut is not a second copy. Do not edit the source table or change sharing to make this exercise work.
 
@@ -344,7 +344,7 @@ Pick at most one at a time. These are not prerequisites or PoC deliverables. Use
 
 ### Fabric notebook — Check data quality and publish a summary (25–40 min)
 
-Create a **Notebook**. In the explorer, use **Add data items > From OneLake catalog** to attach your Day 1 Lakehouse as the default. Run each block in a separate cell. These checks are for the complete synthetic incident file. If your notebook requires schema qualification, prefix the table names with `dbo.` in a schema-enabled Lakehouse.
+Create a **Notebook** named `MaintenanceNotebook_<LabID>` (for example, `MaintenanceNotebook_lab07`). Use the lab ID you chose in place of `lab07`. In the explorer, use **Add data items > From OneLake catalog** to attach your Day 1 Lakehouse as the default. Run each block in a separate cell. These checks are for the complete synthetic incident file. If your notebook requires schema qualification, prefix the table names with `dbo.` in a schema-enabled Lakehouse.
 
 ```sql
 %%sql
@@ -358,7 +358,7 @@ FROM machine_events AS e
 LEFT ANTI JOIN plants AS p ON e.PlantId = p.PlantId
 ```
 
-Expect **500** and **0**. If those checks pass, replace `labid` in the table name below with your lab ID before running (for example, `plant_fault_summary_lab07`). This writes only to a new practice table. If it already exists, use a new practice name rather than changing a core table.
+Expect **500** and **0**. If those checks pass, you can write the results to a new practice table (for example, `plant_fault_summary_lab07`). Use the lab ID you chose in place of `labid` in the code below before running it. If the table already exists, use a new practice name rather than changing a core table.
 
 ```sql
 %%sql
