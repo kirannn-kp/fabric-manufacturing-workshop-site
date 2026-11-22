@@ -73,6 +73,8 @@ The event file is loaded twice on purpose: the Lakehouse copy supports SQL and t
 
 ## Day 1 — Build the data assets in Fabric
 
+**09:30–11:30 is facilitator-led:** theory, discussion, a 15-minute break, and a demo. **Team hands-on work starts at 11:30.**
+
 | Time | Activity | What you leave with |
 |---|---|---|
 | 09:30–10:00 | Welcome and the maintenance problem | A shared decision and list of evidence needed |
@@ -171,26 +173,35 @@ Do this after the core handoff is ready. Use the same synthetic CSV already in y
 
 ## Day 2 — Use the same assets to build in Fabric
 
+**09:30–11:30 is facilitator-led:** recap, theory, a 15-minute break, and a demo using Day 1's assets. **Team hands-on work starts at 11:30.**
+
 | Time | Activity | What you leave with |
 |---|---|---|
-| 09:30–09:50 | Reopen Day 1 assets and confirm the evidence | Same tables, database, dates, and decision |
-| 09:50–11:10 | Build a semantic model and check the numbers | Two-table model or read-only result |
-| 11:10–11:25 | Break | |
-| 11:25–12:30 | Build a Fabric Data Agent and test the first questions | A draft agent connected to your KQL database |
+| 09:30–10:00 | Facilitator recap: trace the Day 1 evidence | A shared view of the two data paths and the maintenance decision |
+| 10:00–10:45 | Theory: semantic models, ontology, Data Agent, and Operations Agent | A clear idea of what each tool does and which data it uses |
+| 10:45–11:00 | Break | |
+| 11:00–11:30 | Facilitator demo: check a model total and verify an agent answer | A worked example to follow during the labs |
+| 11:30–12:30 | Build or open a semantic model and check the numbers | Two-table model or read-only result |
 | 12:30–13:15 | Lunch | |
-| 13:15–14:05 | Improve and retest the agent | A completed answer-check scorecard |
-| 14:05–14:45 | Map the incident with an ontology | An entity diagram or guided live walkthrough |
+| 13:15–14:15 | Build and test a draft Fabric Data Agent | A draft connected to your KQL database and a checked scorecard |
+| 14:15–14:45 | Map the incident with an ontology | An entity diagram or guided live walkthrough |
 | 14:45–15:00 | Break | |
 | 15:00–15:45 | Review and replay an Operations Agent rule | A threshold check, with no actions running |
 | 15:45–16:00 | Demonstrate the Fabric flow and prepare Day 3 evidence | One recommendation and one limitation |
 
-### 09:30 — Reopen and build the semantic model
+### 09:30–11:30 — Understand the model and agents before building
+
+- **Recap (30 min):** The facilitator opens the Day 1 Lakehouse, KQL database, and dashboard or saved queries. Ask the room what broke the tie in fault counts and what the data still cannot prove.
+- **Theory (45 min):** Explain how a semantic model defines what to count and how a plant filter reaches its events. Contrast that with an ontology, which describes the plant, machine, and event and how they relate. Then explain the difference between asking a Data Agent a question and reviewing a rule in an Operations Agent playbook. Both agent exercises use the Day 1 KQL data, not the semantic model.
+- **Demo (30 min, after the break):** Run one read-only DAX count and compare it with Day 1 KQL. Show a precise Data Agent prompt and verify its answer against a saved query. Finish by showing the stopped playbook and explaining why the team replays the rule without starting the agent. Use prepared results if a live feature is unavailable. Participants watch and discuss; they do not need to create items during this block.
+
+### 11:30 — Reopen and build the semantic model
 
 **What you'll do:** Cross-check the fault totals from the Lakehouse copy, without building a report. **Microsoft Learn:** [Direct Lake overview](https://learn.microsoft.com/en-us/fabric/fundamentals/direct-lake-overview), [DAX query view](https://learn.microsoft.com/en-us/power-bi/transform-model/dax-query-view), and [Edit model relationships and measures](https://learn.microsoft.com/en-us/power-bi/transform-model/service-edit-data-models).
 
-1. **Reopen (20 min):** Locate yesterday's `plants` and `machine_events` Lakehouse tables and rerun the repeated-fault KQL against yesterday's database. The model will use the Lakehouse copy; the Data Agent will use the KQL copy. This lab does not require connecting the Data Agent to the semantic model.
-2. **Create (20 min):** In the Lakehouse choose **New semantic model**, name it `MaintenanceModel_<Team>`, select only `plants` and `machine_events`, and confirm. If creation is blocked by licensing or permissions, open the prepared two-table model. No report is needed.
-3. **Validate (30 min):** Open **DAX query view > New query**, paste the following, and select **Run**. It works in Viewing mode and does not change the model. Check 8 faults per machine, then replace `"Fault"` with `"Run"` and compare the totals.
+1. **Reopen (10 min):** Locate yesterday's `plants` and `machine_events` Lakehouse tables and rerun the repeated-fault KQL against yesterday's database. The model will use the Lakehouse copy; the Data Agent will use the KQL copy. This lab does not require connecting the Data Agent to the semantic model.
+2. **Create (15 min):** In the Lakehouse choose **New semantic model**, name it `MaintenanceModel_<Team>`, select only `plants` and `machine_events`, and confirm. If creation is blocked by licensing or permissions, open the prepared two-table model. No report is needed.
+3. **Validate (20 min):** Open **DAX query view > New query**, paste the following, and select **Run**. It works in Viewing mode and does not change the model. Check 8 faults per machine, then replace `"Fault"` with `"Run"` and compare the totals.
 
    ```dax
    EVALUATE
@@ -206,17 +217,19 @@ Do this after the core handoff is ready. Use the same synthetic CSV already in y
    )
    ```
 
-4. **Explain the relationship (30 min):** Draw `plants[PlantId]` (one) → `machine_events[PlantId]` (many). Predict what a Plant North filter should do. If the facilitator has verified editing, create the active single-direction relationship in **Manage relationships** and add a measure to `machine_events`: `Machine fault count = CALCULATE(COUNTROWS(machine_events), machine_events[EventType] = "Fault")`. In the same incident window, check 16 overall and 8 when filtered through `plants` to `P01`. If editing is unavailable, keep the drawing and validated read-only result; the query above does not prove the relationship works. If the model cannot open, use KQL and the plant lookup.
+4. **Explain the relationship (15 min):** Draw `plants[PlantId]` (one) → `machine_events[PlantId]` (many). Predict what a Plant North filter should do. The read-only query above checks counts, not the relationship. If the model cannot open, use KQL and the plant lookup.
 
-### 11:25 and 13:15 — Build and improve the Data Agent
+**Optional if time permits and editing has been verified:** Create the active single-direction relationship in **Manage relationships** and add a measure to `machine_events`: `Machine fault count = CALCULATE(COUNTROWS(machine_events), machine_events[EventType] = "Fault")`. In the same incident window, check 16 overall and 8 when filtered through `plants` to `P01`.
+
+### 13:15 — Build and improve the Data Agent
 
 **What you'll do:** Test a draft that answers questions from your KQL database. Treat query results as the reference, not the draft's wording. **Microsoft Learn:** [Create and test a Fabric Data Agent](https://learn.microsoft.com/en-us/fabric/data-science/how-to-create-data-agent).
 
-1. **Connect (25 min):** Choose **New item > Data agent**. In the draft, choose **Add a data source**, select your Day 1 **KQL database**, not the Eventhouse container, and select **Add**. Under **Explorer > Sources > Tables**, check `machine_events`. Keep the agent a draft.
-2. **Test (25 min):** In **Test the agent's responses**, use the first two prompts below. Compare each answer to the Day 1 query and mark pass, partial, or fail.
-3. **Compare (15 min):** Ask “Which machine is worst?” and compare its answer to the more precise prompt for repeated faults. Discuss what the vague question omitted.
-4. **Retest (30 min):** After lunch, run the remaining three prompts and rewrite one weak prompt to include a date window, exact filters, and output format. Record what changed between answers.
-5. **Explain (20 min):** Exchange scorecards. Use the Day 1 dashboard or saved queries to verify one answer independently and identify an unsupported claim. If the agent is unavailable, take turns answering with only the Day 1 evidence and score the answers using the same criteria.
+1. **Connect (15 min):** Choose **New item > Data agent**. In the draft, choose **Add a data source**, select your Day 1 **KQL database**, not the Eventhouse container, and select **Add**. Under **Explorer > Sources > Tables**, check `machine_events`. Keep the agent a draft.
+2. **Test (15 min):** In **Test the agent's responses**, use the first two prompts below. Compare each answer to the Day 1 query and mark pass, partial, or fail.
+3. **Compare (5 min):** Ask “Which machine is worst?” and compare its answer to the more precise prompt for repeated faults. Discuss what the vague question omitted.
+4. **Retest (15 min):** Run the remaining three prompts and rewrite one weak prompt to include a date window, exact filters, and output format. Record what changed between answers.
+5. **Explain (10 min):** Exchange scorecards. Use the Day 1 dashboard or saved queries to verify one answer independently and identify any unsupported claim. If the agent is unavailable, take turns answering with only the Day 1 evidence and score the answers using the same criteria.
 
 **Fast finish:** Compare fault counts with fault rates by plant using the same window. In KQL, summarize `TotalEvents = count(), Faults = countif(EventType == "Fault") by PlantId`, then calculate `FaultRatePct = round(100.0 * Faults / TotalEvents, 2)` with `extend`. Explain why a fault rate does not replace the severity evidence. If the dashboard is available, add the result as a third tile.
 
@@ -228,12 +241,12 @@ Do this after the core handoff is ready. Use the same synthetic CSV already in y
 | Did any machine record at least nine Fault events? | None. |
 | Which production orders were affected by these faults? | The connected data does not say; don't invent orders or causal links. |
 
-### 14:05 — Map the evidence with an ontology
+### 14:15 — Map the evidence with an ontology
 
 **Microsoft Learn:** [Fabric IQ ontology overview](https://learn.microsoft.com/en-us/fabric/iq/ontology/overview). Use the diagram exercise below even if live ontology is unavailable.
 
-- **Explain (10 min):** The semantic model defines how to count. An ontology describes the things in the operation and their relationships.
-- **Draw and trace (25 min):** Draw `Plant → Machine → Fault Event`. Key a plant by `PlantId`, a machine by `PlantId + MachineId`, and an event by the machine key plus `EventTime` in this dataset. Trace `P01 → MC-N01 → 2026-11-01 00:00 UTC`. If a prepared Fabric IQ ontology is available, trace the same record there. No live ontology item is required.
+- **Recap (5 min):** The semantic model defines how to count. An ontology describes the things in the operation and their relationships.
+- **Draw and trace (20 min):** Draw `Plant → Machine → Fault Event`. Key a plant by `PlantId`, a machine by `PlantId + MachineId`, and an event by the machine key plus `EventTime` in this dataset. Trace `P01 → MC-N01 → 2026-11-01 00:00 UTC`. If a prepared Fabric IQ ontology is available, trace the same record there. No live ontology item is required.
 - **Peer check (5 min):** Explain what extra data would be needed to relate an event to a production order.
 
 ### 15:00 — Review the Operations Agent and hand off
