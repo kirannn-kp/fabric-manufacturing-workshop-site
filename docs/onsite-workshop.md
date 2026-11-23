@@ -271,19 +271,33 @@ machine_events
 **What you'll do:** Test a draft that answers questions from your KQL database. Treat query results as the reference, not the draft's wording. **Microsoft Learn:** [Create and test a Fabric Data Agent](https://learn.microsoft.com/en-us/fabric/data-science/how-to-create-data-agent).
 
 1. **Connect (15 min):** Choose **New item > Data agent** and name it `MaintenanceDataAgent_<LabID>` (for example, `MaintenanceDataAgent_lab07`). Use the lab ID you chose in place of `lab07`. In the draft, choose **Add a data source**, select your Day 1 **KQL database**, not the Eventhouse container, and select **Add**. Under **Explorer > Sources > Tables**, check `machine_events`. Keep the agent a draft.
-2. **Test (10 min):** In **Test the agent's responses**, run the first two prompts below. Verify the exact counts against your scorecard, and mark each answer pass, partial, or fail.
-3. **Challenge and retest (15 min):** Ask the unsupported production-order question below. Then write your own prompt asking the agent to rank the tied machines and call out the small denominator. Specify the UTC window, tie-break rule, and output columns. If the answer is off, change one part of the prompt and rerun it. Record the before and after.
-4. **Explain (5 min):** An answer passes when the recommendation and figures match the data and it states what it cannot establish. Mark missing evidence as partial and invented impact or wrong numbers as fail. If the agent is unavailable, score a proposed answer against the saved results using the same rules.
+2. **Test (10 min):** In **Test the agent's responses**, paste Q1 and Q2 below one at a time. Record the answers before checking them against your scorecard.
+3. **Challenge and retest (15 min):** Paste Q3 to test a question the data cannot answer. For Q4, write your own ranking prompt first. If the answer is off, tighten the window, filters, tie-break rule, or requested columns and rerun it. Use the sample prompt if stuck. Record what changed.
+4. **Score (5 min):** Mark each answer **pass** if the facts match KQL and it respects what the data can show, **partial** if it omits requested evidence, or **fail** if it gives wrong numbers or invents impact. If the agent is unavailable, answer the same questions from saved KQL results and label your work as a fallback.
+
+**Copy-paste Data Agent questions:** Each prompt includes its own time window, so it can be run on its own.
+
+| Test | Prompt to paste |
+|---|---|
+| Q1 · Count faults | `From 2026-11-01 00:00 UTC (inclusive) to 2026-11-11 00:00 UTC (exclusive), which plant and machine pairs had at least three events where EventType is Fault? Return PlantId, MachineId, and the exact fault count.` |
+| Q2 · Check severity | `From 2026-11-01 00:00 UTC (inclusive) to 2026-11-11 00:00 UTC (exclusive), count events where Severity is High, regardless of EventType. Return PlantId, MachineId, and the High event count for each pair with at least one High event.` |
+| Q3 · Test the evidence boundary | `From 2026-11-01 00:00 UTC (inclusive) to 2026-11-11 00:00 UTC (exclusive), which production orders were affected by the machine faults? Use only the connected data. If it cannot establish which orders were affected, tell me what evidence is missing.` |
+| Q4 · Rank and explain (sample after your own attempt) | `From 2026-11-01 00:00 UTC (inclusive) to 2026-11-11 00:00 UTC (exclusive), keep plant and machine pairs with at least three Fault events. Rank them by fault count, highest first, breaking ties by the count of High events regardless of event type. Return PlantId, MachineId, fault count, all recorded events, fault percentage, and High event count. Recommend one machine for human review and explain what the fault percentage does not tell us.` |
+| Q5 · Find the first High event (optional) | `From 2026-11-01 00:00 UTC (inclusive) to 2026-11-11 00:00 UTC (exclusive), find the earliest event where Severity is High, regardless of EventType. Return PlantId, MachineId, and the UTC timestamp.` |
+| Q6 · Check an empty result (optional) | `From 2026-11-01 00:00 UTC (inclusive) to 2026-11-11 00:00 UTC (exclusive), did any plant and machine pair have at least nine events where EventType is Fault? If none qualify, say so.` |
+
+**Check against KQL after you run the prompts:**
+
+| Test | Expected result |
+|---|---|
+| Q1 | `P01 / MC-N01` and `P02 / MC-S01` each had **8** faults. |
+| Q2 | **6** High events, all on `P01 / MC-N01`. |
+| Q3 | The connected data cannot establish order impact. It has no link from a machine and event time to a production order, and a time match alone would not prove impact. |
+| Q4 | Review **`MC-N01`** first: both machines had 8 faults out of 8 recorded events (100%), but it had **6** High events versus **0** on `MC-S01`. The percentage is not a failure probability or a measure of operating time. |
+| Q5 | `P01 / MC-N01`, **2026-11-01 00:00 UTC**. |
+| Q6 | No machine met the cutoff. |
 
 **Fast finish:** Compare fault counts with fault rates by plant using the same window. In KQL, summarize `TotalEvents = count(), Faults = countif(EventType == "Fault") by PlantId`, then calculate `FaultRatePct = round(100.0 * Faults / TotalEvents, 2)` with `extend`. Explain why a fault rate does not replace the severity evidence. If the dashboard is available, add the result as a third tile.
-
-| Prompt (use November 1–10, 2026 UTC) | Check before accepting |
-|---|---|
-| Which machines had at least three Fault events? Return plant, machine, and exact count. | `P01 / MC-N01`: 8; `P02 / MC-S01`: 8. |
-| How many High events occurred, regardless of event type, and on which machines? | 6, all on `MC-N01`. |
-| What was the earliest High event? Give the UTC timestamp. | November 1 at 00:00 UTC on `MC-N01`. |
-| Did any machine record at least nine Fault events? | None. |
-| Which production orders were affected by these faults? | The connected data does not say; don't invent orders or causal links. |
 
 ### 14:55 — Map the evidence with an ontology
 
@@ -297,8 +311,16 @@ machine_events
 **Microsoft Learn:** [Operations Agent and playbooks](https://learn.microsoft.com/en-us/fabric/real-time-intelligence/operations-agent). Read about rules and playbooks; skip instructions to start the agent or configure actions.
 
 1. **Inspect (10 min):** Open the facilitator's stopped playbook. Identify the data source, grouping, threshold, and intended human action. If unavailable, annotate those four parts in your notes. Do not start the agent or configure any actions.
-2. **Replay (15 min):** Use the Day 1 reference query at `>= 3`, `>= 8`, and `>= 9`. Record what changes and what doesn't. Then test your own prioritization rule against the scorecard: keep the 3+ shortlist and use High events to rank it. Explain what raising the threshold alone would miss in this window.
+2. **Replay (15 min):** Use the Day 1 reference query at `>= 3`, `>= 8`, and `>= 9`. Answer the rule-check questions below using the KQL results and your scorecard.
 3. **Decide (5 min):** Write your recommendation with the UTC window, counts, and one limitation. Leave the final decision with a human.
+
+**Operations Agent rule-check questions:** These are for the group to answer from the stopped playbook and historical KQL, not prompts to paste into the Data Agent.
+
+| Check | Question | Expected evidence |
+|---|---|---|
+| Shortlist | Which plant and machine pairs qualify at each cutoff: 3+, 8+, and 9+ faults? | `P01 / MC-N01` and `P02 / MC-S01` qualify at 3+ and 8+; neither qualifies at 9+. |
+| Trade-off | Why can't you just raise the cutoff to choose one of the two machines? | They both had 8 faults, so raising the cutoff keeps both or drops both. |
+| Priority | Keep the 3+ shortlist. Which machine comes first when you break ties using High events, and what should happen next? | `MC-N01`: 6 High events versus 0 on `MC-S01`. Recommend human review only; don't trigger an action. |
 
 ### 15:45 — Present the evidence and compare platforms
 
