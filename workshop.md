@@ -66,26 +66,26 @@ You'll check the same incident from two Fabric paths, compare the results, and h
 
 ## Solution architecture
 
-![Workshop architecture: two CSVs feed the Lakehouse and the event CSV also feeds Eventhouse. The two Fabric paths produce an evidence card for a human shift lead, then a manual handoff to Day 3 pilot planning.](assets/maintenance-architecture.svg)
+![Workshop architecture: Day 1 CSVs feed the Lakehouse and Eventhouse. On Day 2 an API batch feeds the Lakehouse for Spark anomaly detection and ontology tracing. The Lakehouse and KQL evidence feed a human review and a manual Day 3 handoff.](assets/maintenance-architecture.svg)
 
 | Component | What it does in this workshop | What you keep |
 |---|---|---|
 | Two CSV inputs | `plants.csv` names the three plants. `machine_events.csv` records when each machine reported an event, its event type, and its severity. `PlantId` connects the files. | The original files, unchanged. |
-| Lakehouse in OneLake | Load both files as tables. Use SQL to check plant totals, then use a Spark notebook on Day 2 to build a machine-level scorecard and save it as a separate Delta table. | Core tables, plant-level totals, and a machine scorecard or read-only equivalent. |
+| Lakehouse in OneLake | Load both CSVs and use SQL to check plant totals. On Day 2, land a separate synthetic API batch in Files, enrich it with Spark, and publish recipe anomalies as Delta tables. | Day 1 tables plus separate process and anomaly tables. |
 | Eventhouse and Real-Time Dashboard | Load the event file into a KQL database. Count faults per plant and machine, and list the High-severity events separately. The dashboard or saved queries show both results. | Two views of the same incident: fault counts and event details. |
-| Semantic model and ontology sketch | Reuse the Lakehouse tables. Use DAX to check the totals; sketch how a plant, machine, and event are related. The sketch explains the business relationships and is not a live dependency. | Model or read-only result, plus the relationship sketch. |
+| Semantic model and Fabric IQ ontology | Check the Day 1 counts with DAX. Use an ontology to trace a Day 2 anomaly from its plant and machine to the specific process run. | Checked fault totals and a linked anomaly, or the same trace as a design exercise if ontology creation is unavailable. |
 | Data Agent and Operations Agent rule | The draft Data Agent uses the **KQL database**, not the semantic model. Verify its answers against queries. Replay the Operations Agent rule in KQL against historical data; leave the agent stopped. | Checked answers and the results of the threshold test. |
 | Evidence card and human review | A shift lead reads the supporting query results, chooses one machine for review, and notes what the data cannot prove. | One recommendation with the UTC window, counts, and a representative event. |
 | Foundry and pilot planning | Bring the evidence card to the facilitator walkthrough. Discuss whether a read-only assistant would help with the next shift handoff and how to test it. | A one-page pilot scope with an owner, success checks, and a review date. |
 
-The event file is loaded twice on purpose: the Lakehouse copy supports SQL and the semantic model; the Eventhouse copy supports time-based KQL, the dashboard, and the agent exercises. Both loads are manual. **There is no automatic sync or required live Foundry connection.** Day 3 gets the evidence card, not access to your Fabric workspace.
+The Day 1 event file is loaded twice on purpose: the Lakehouse copy supports SQL and the semantic model; the Eventhouse copy supports KQL, the dashboard, and the agent exercises. The separate Day 2 API batch lands only in the Lakehouse. **There is no automatic sync to Eventhouse or required live Foundry connection.** Day 3 gets the evidence card, not access to your Fabric workspace.
 
 ## How you'll reach a decision
 
 1. **Check the inputs.** Confirm three plant records and 500 machine events. In the Lakehouse, use `PlantId` to match events to plants. Keep plants with zero faults in the result so “no faults” doesn't look like “missing plant.”
 2. **Compare the same time window.** Use November 1–10, 2026 UTC (include November 1, exclude November 11). In Eventhouse, count `Fault` events by `PlantId` and `MachineId`. Start by flagging machines with at least three faults. Split the window into two five-day periods to see whether the pattern changes.
 3. **Break a tie with severity, not guesswork.** List `High` events for the whole window, separately from the fault count. If two machines tie on counts, compare their High events and record a timestamp another reader can look up. High severity helps set priority; it isn't a root-cause diagnosis.
-4. **Cross-check before recommending.** Build the machine scorecard from the Lakehouse, verify it against Eventhouse KQL, and check the fault total in DAX if available. Test whether the Data Agent can explain the decision without inventing a cause. Replay the rule at 3, 8, and 9 faults to see how the cutoff changes the shortlist.
+4. **Cross-check before recommending.** Verify the fault scorecard with KQL and DAX. In a separate pipeline, detect an unexpected recipe change and trace it with the ontology. Check the Data Agent's answer against KQL and replay the Operations Agent rule. Treat the anomaly as additional context, not proof that it caused any fault.
 5. **Handoff and scope the pilot.** Fill in: “Review ___ first. In ___ UTC, it recorded ___ faults and ___ High events; one example is ___. The data does not tell us ___.” On Day 3, turn this into a read-only pilot for one plant and one shift. Include a positive case and a case where the assistant should say it doesn't know.
 
 **Before you move on:** Check that you can explain which file goes into each Fabric item, how you'd break a tie, and what the final recommendation must not claim. Use the **Evidence card and help** page to check your work after the labs.
@@ -198,57 +198,45 @@ Do this after the core handoff is ready. Use the same synthetic CSV already in y
 
 **09:30–11:30 is facilitator-led:** recap, theory, a 15-minute break, and a demo using Day 1's assets. **Hands-on work starts at 11:30.**
 
-**Intermediate challenge: defend your maintenance recommendation.** Two machines tie on fault count. Build a machine-level scorecard, reconcile it across Fabric tools, and explain why neither the fault count nor the fault rate is enough to pick a machine on its own. Try each task from the requirements before opening the reference query or checking the evidence card.
+**Intermediate challenge: defend your maintenance recommendation.** Two machines tie on fault count. Use the Day 1 scorecard to verify the fault evidence, then test whether a separate process feed gives the reviewer useful context. Build a rule for an unexpected recipe change, automate the notebook run, and trace the anomaly in Fabric IQ without implying that it caused a fault.
 
 | Time | Activity | What you leave with |
 |---|---|---|
 | 09:30–10:00 | Facilitator recap: trace the Day 1 evidence | A shared view of the two data paths and the maintenance decision |
-| 10:00–10:45 | Theory: Spark and OneLake, Eventhouse, semantic models, ontology, and agents | A map of which tool produces, checks, or explains the evidence |
+| 10:00–10:45 | Theory: Data Factory, Spark and OneLake, semantic models, ontology, and agents | A map of which tool produces, checks, or explains the evidence |
 | 10:45–11:00 | Break | |
-| 11:00–11:30 | Facilitator demo: trace a plant count from Spark to KQL and DAX, then verify an agent answer | A worked example without solving the machine challenge |
-| 11:30–12:30 | Build a machine scorecard with Spark and verify it in KQL | A Delta practice table or a read-only scorecard, with reconciled counts |
+| 11:00–11:30 | Facilitator demo: preview the API pipeline, prepared scorecard, and ontology | One worked example without solving the anomaly exercise |
+| 11:30–12:30 | Pull a synthetic API batch, enrich it, and automate the anomaly check | Two process-run outcomes, one anomaly, and a repeatable pipeline design |
 | 12:30–13:15 | Lunch | |
 | 13:15–13:55 | Use the semantic model to cross-check the scorecard | An independently checked fault total and a filter prediction |
 | 13:55–14:40 | Test a draft Data Agent with precise and misleading questions | A corrected prompt and a pass/partial/fail evaluation |
 | 14:40–14:55 | Break | |
-| 14:55–15:15 | Sketch the ontology and identify a missing relationship | An entity diagram and the missing evidence for order impact |
-| 15:15–15:45 | Replay an Operations Agent rule and defend a threshold | A recorded threshold trade-off, with no actions running |
+| 14:55–15:30 | Build and trace an ontology in Fabric IQ | Plant, machine, process run, and anomaly linked by keys |
+| 15:30–15:45 | Replay an Operations Agent rule and defend a threshold | A recorded threshold trade-off, with no actions running |
 | 15:45–16:00 | Present your recommendation and discuss the platform comparison | One evidence card for Day 3 and one question for a fair pilot |
 
 ## 09:30–11:30 — Understand the model and agents before building
 
 - **Recap (30 min):** The facilitator opens the Day 1 Lakehouse, KQL database, and dashboard or saved queries. Ask the room what broke the tie in fault counts and what the data still cannot prove.
-- **Theory (45 min):** Give each tool one job: Spark transforms data in OneLake; KQL independently queries the Eventhouse copy; a semantic model defines reusable metrics and filters; an ontology describes how entities relate. A Data Agent answers questions; an Operations Agent playbook expresses a rule. Both agent exercises use the Day 1 KQL database, not the notebook output or the semantic model.
-- **Demo (30 min, after the break):** Show a Spark count for one plant, check the same count with KQL and read-only DAX, then verify the answer to a precise Data Agent prompt. Preview the stopped playbook. Save the machine-level logic and ranking for the labs. Use prepared results if a live feature is unavailable.
+- **Theory (45 min):** Data Factory lands an API response; Spark applies a custom rule and writes results to OneLake. DAX and KQL check the separate Day 1 fault evidence. An ontology links business entities so reviewers can follow the evidence. Both agent exercises still use Day 1 KQL, not the notebook output or the semantic model.
+- **Demo (30 min, after the break):** Preview the Copy → Notebook success dependency, cross-check one Day 1 result with DAX or KQL, and demonstrate one already configured ontology relationship if available. Use a normal run for the demo so participants can work out the day-5 result themselves.
 
-## 11:30 — Build and reconcile a machine scorecard
+## 11:30 — Automate API ingestion and detect an unexpected recipe
 
-**Microsoft Learn:** [Work with Fabric notebooks](https://learn.microsoft.com/en-us/fabric/data-engineering/author-execute-notebook), [Query a Lakehouse with the SQL analytics endpoint](https://learn.microsoft.com/en-us/fabric/data-engineering/lakehouse-sql-analytics-endpoint), and [KQL aggregation functions](https://learn.microsoft.com/en-us/kusto/query/aggregation-functions?view=microsoft-fabric).
+**Starter files:** [Synthetic process batch](https://raw.githubusercontent.com/kirannn-kp/fabric-manufacturing-workshop-site/main/data/process_batch.json) · [Importable Spark SQL notebook](https://raw.githubusercontent.com/kirannn-kp/fabric-manufacturing-workshop-site/main/labs/process-anomaly.ipynb). Save both files locally with their original extensions. The source is a fixed replay of November 1–5, 2026 UTC, not a live plant feed.
 
-1. **Define the metric (10 min):** Use one row per `PlantId` + `MachineId` and November 1–10, 2026 UTC (include November 1, exclude November 11). Keep machines with zero faults. Count all events, `Fault` events, and `High` events (any event type) separately. Calculate `100 × faults / all events` per machine. Write down which rows belong in the denominator *before* you run the query.
-2. **Build (25 min):** Create a **Notebook** named `MaintenanceNotebook_<LabID>` (for example, `MaintenanceNotebook_lab07`). Use the lab ID you chose in place of `lab07`. In the explorer, use **Add data items > From OneLake catalog** to attach your Day 1 Lakehouse as the default. Choose **Spark SQL** as the cell language (or put `%%sql` on the first line of a Python cell). Run `SET spark.sql.session.timeZone=UTC` in one Spark SQL cell. In a new cell, group `dbo.machine_events` by plant and machine; omit `dbo.` if your Lakehouse has no schemas. Hint: conditional `SUM(CASE WHEN … THEN 1 ELSE 0 END)` counts faults without dropping normal events. If Spark startup or access blocks you for 10 minutes, run the same `WITH … SELECT` in the Lakehouse SQL analytics endpoint. If that route is blocked too, use the KQL reference and label the result as a fallback, not a cross-engine check.
-3. **Save and reopen (10 min):** If using Spark, create a new Delta practice table named `machine_scorecard_<LabID>` (for example, `machine_scorecard_lab07`). Use the lab ID you chose in place of `lab07`. To save, prefix your query with `CREATE TABLE dbo.machine_scorecard_labid USING DELTA AS` after substituting your ID, and remove the final `ORDER BY`. Then run `SELECT *` against your new table to check it. If the Lakehouse has no schemas, omit `dbo.`. If that practice table already exists, use a new practice name; don't overwrite the core tables. The read-only SQL fallback skips the save.
-4. **Reconcile (15 min):** In Eventhouse, start from the Day 1 KQL window, remove the filter that keeps only `Fault`, and use `summarize` with `count()` and `countif(...)` per plant and machine. Compare machine rows, totals, and High events across the two paths. If the numbers differ, check the UTC window, filters, and denominator. Explain why a 100% fault rate here is a percentage of **recorded events**, not a machine failure probability or a percentage of operating time.
+**Microsoft Learn:** [HTTP in a Copy activity](https://learn.microsoft.com/en-us/fabric/data-factory/connector-http-copy-activity) · [Lakehouse destination](https://learn.microsoft.com/en-us/fabric/data-factory/connector-lakehouse-copy-activity) · [Notebook activity](https://learn.microsoft.com/en-us/fabric/data-factory/notebook-activity) · [Pipeline runs and schedules](https://learn.microsoft.com/en-us/fabric/data-factory/pipeline-runs).
 
-**Reference query — use after your first attempt (Spark SQL or read-only Lakehouse SQL):**
+1. **Land the batch (10 min):** Follow the facilitator's prepared Data Factory pipeline, or create a **Data pipeline** named `MaintenanceProcessPipeline_<LabID>` (for example, `MaintenanceProcessPipeline_lab07`). Use the lab ID you chose in place of `lab07`. In **Copy data**, use the **HTTP** connector with anonymous `GET`, base URL `https://api.github.com`, and relative URL `repos/kirannn-kp/fabric-manufacturing-workshop-site/contents/data/process_batch.json?ref=main`. Under **Additional headers**, set `User-Agent` to `Fabric-Workshop` and `Accept` to `application/vnd.github+json`. Use **Binary** format to keep the API response unchanged. Set the **Lakehouse** destination to **Files**, **Binary**, folder `process_lab07`, file `process_batch.json`; substitute your own lab ID. If the connection is blocked or rate-limited, upload the starter JSON to that same path instead. The notebook accepts both the GitHub response wrapper and the unwrapped download.
+2. **Enrich and classify (25 min):** Use **Import → Notebook** in the workspace to import the starter as `MaintenanceProcessNotebook_<LabID>` (for example, `MaintenanceProcessNotebook_lab07`). Use the lab ID you chose in place of `lab07`. Attach the Day 1 Lakehouse as the **default** and replace all `lab07` occurrences in the notebook's paths and table names with your lab ID. Join the runs to the plant lookup, expected recipe by plant and machine, and approvals by run ID. Before reading the reference cell, write the rule: the actual recipe matches the expected one, an exact change is approved, the change is unexpected, or required reference data is missing.
+3. **Run and check (15 min):** Run the notebook. Verify **8 Normal, 1 ApprovedChange, and 1 Anomaly**. The flagged record should be `N01-D05` on `MC-N01` on **November 5 UTC**: expected `A`, actual `B`. The approved switch on `S01-D05` must not be flagged. The notebook writes only your `process_machines_<LabID>`, `process_runs_<LabID>`, and `process_anomalies_<LabID>` Delta tables. For `lab07`, these end in `_lab07`; use the lab ID you chose. Replaying the same fixed batch replaces those practice snapshots, so the anomaly count stays **1**. Do not overwrite anyone else's outputs, `plants`, or `machine_events`.
+4. **Orchestrate and monitor (10 min):** In the prepared pipeline, inspect the **Notebook** activity and its **On success** dependency on Copy data. If you created your own pipeline and the API copy works, add that dependency and select the saved notebook configured for your copy's Lakehouse and path. Use a manual **Run** and check both activities in run history; if the full run is still in progress or you used local JSON, look at the facilitator's run rather than wiring a failing copy. Show where to configure a daily schedule but leave it **off**. A real incremental pipeline would pass a run date or watermark and merge by stable IDs; this workshop uses one replayable snapshot. No live alerts or changes to manufacturing systems.
 
-```sql
-WITH machine_counts AS (
-    SELECT PlantId, MachineId,
-           COUNT(*) AS TotalEvents,
-           SUM(CASE WHEN EventType = 'Fault' THEN 1 ELSE 0 END) AS Faults,
-           SUM(CASE WHEN Severity = 'High' THEN 1 ELSE 0 END) AS HighEvents
-    FROM dbo.machine_events
-    WHERE EventTime >= '2026-11-01' AND EventTime < '2026-11-11'
-    GROUP BY PlantId, MachineId
-)
-SELECT PlantId, MachineId, TotalEvents, Faults, HighEvents,
-       CAST(100.0 * Faults / TotalEvents AS DECIMAL(9, 2)) AS FaultRatePct
-FROM machine_counts
-ORDER BY Faults DESC, HighEvents DESC, PlantId, MachineId;
-```
+**Fallback:** If Spark or Delta writes are blocked after 10 minutes, use the facilitator's prepared tables or work out the rule from the JSON and compare it with the evidence card. Don't treat a fallback as a successful live pipeline run.
 
-**KQL reference — use after your first attempt or as the read-only fallback:**
+## 13:15 — Cross-check the Day 1 scorecard in a semantic model
+
+The morning's process runs are an independent input, not the denominator for Day 1 fault rates. Use this **prepared KQL scorecard query** (or a facilitator's saved output) to carry the original fault evidence into the DAX and agent labs:
 
 ```kusto
 machine_events
@@ -259,10 +247,6 @@ machine_events
 | extend FaultRatePct = round(100.0 * Faults / TotalEvents, 2)
 | order by Faults desc, HighEvents desc, PlantId asc, MachineId asc
 ```
-
-**Test your work:** Does the scorecard still include machines with no faults? Do the event and fault totals match Day 1? If two machines tie on both fault count and fault rate, what evidence makes one the better candidate for review?
-
-## 13:15 — Cross-check the scorecard in a semantic model
 
 **What you'll do:** Cross-check the fault totals from the Lakehouse copy, without building a report. **Microsoft Learn:** [Direct Lake overview](https://learn.microsoft.com/en-us/fabric/fundamentals/direct-lake-overview), [DAX query view](https://learn.microsoft.com/en-us/power-bi/transform-model/dax-query-view), and [Edit model relationships and measures](https://learn.microsoft.com/en-us/power-bi/transform-model/service-edit-data-models).
 
@@ -320,20 +304,35 @@ machine_events
 
 **Fast finish:** Compare fault counts with fault rates by plant using the same window. In KQL, summarize `TotalEvents = count(), Faults = countif(EventType == "Fault") by PlantId`, then calculate `FaultRatePct = round(100.0 * Faults / TotalEvents, 2)` with `extend`. Explain why a fault rate does not replace the severity evidence. If the dashboard is available, add the result as a third tile.
 
-## 14:55 — Map the evidence with an ontology
+## 14:55 — Create a Fabric IQ ontology and trace the anomaly
 
-**Microsoft Learn:** [Fabric IQ ontology overview](https://learn.microsoft.com/en-us/fabric/iq/ontology/overview). Use the diagram exercise below even if live ontology is unavailable.
+**Microsoft Learn:** [Create an ontology](https://learn.microsoft.com/en-us/fabric/iq/ontology/tutorial-1-create-ontology) · [Create and bind relationship types](https://learn.microsoft.com/en-us/fabric/iq/ontology/how-to-create-relationship-types).
 
-- **Draw and trace (10 min):** Sketch `Plant → Machine → Fault Event`, label the keys, and trace `P01 → MC-N01 → 2026-11-01 00:00 UTC`. Use the prepared ontology if available; no live ontology item is required.
-- **Find the gap (10 min):** Add a proposed path to `Production Order`. Name the missing mapping and explain how you would handle a machine that ran more than one order that day. A plant ID by itself is not evidence that an order was affected.
+1. **Create (5 min):** In the workshop workspace, select **New item → Ontology (preview)** and name your item `MaintenanceOntology_<LabID>` (for example, `MaintenanceOntology_lab07`). Use the lab ID you chose in place of `lab07`. You need item creation permission and the ontology preview enabled for your account. If the item is missing, continue with the design fallback instead of changing tenant settings.
+2. **Bind the entity types (15 min):** Add the four entity types below and bind each to its OneLake table; select the indicated key. Use your morning Delta tables, or the facilitator's prepared tables if you used a pipeline fallback. Bind only the listed keys and properties to stay within the lab.
+3. **Connect and trace (15 min):** Add the three relationship types below. For each, select the origin and target properties. Leave **Use mapping table** off: the listed keys are already on both entity sources. Save and open **Explore ontology**. Search for `P01` and follow the relationships to `N01-D05:recipe_mismatch`; verify the expected and actual recipes and the reason. Check that `S01-D05` is a process run but has no anomaly. If instances are still loading, validate the keys against the Delta tables rather than waiting.
 
-## 15:15 — Replay an Operations Agent rule
+| Entity type | OneLake table | Unique entity key | Other properties to bind |
+|---|---|---|---|
+| `Plant` | `plants` | `PlantId` | `PlantName` |
+| `Machine` | `process_machines_<LabID>` | `MachineKey` | `PlantId`, `MachineId`, `LineName` |
+| `ProcessRun` | `process_runs_<LabID>` | `RunId` | `MachineKey`, `RunDateUtc`, `RunStatus` |
+| `Anomaly` | `process_anomalies_<LabID>` | `AnomalyId` | `RunId`, `ExpectedRecipe`, `ActualRecipe`, `Reason` |
+
+| Relationship | Origin → target | Matching properties |
+|---|---|---|
+| `ContainsMachine` | Plant → Machine | `PlantId` → `PlantId` |
+| `ExecutesRun` | Machine → ProcessRun | `MachineKey` → `MachineKey` |
+| `HasAnomaly` | ProcessRun → Anomaly | `RunId` → `RunId` |
+
+**Design fallback:** Draw the same four entities, write the keys on the arrows, and trace the two day-5 rows using the evidence card or prepared tables. Label it a design exercise, not a live ontology. In either path, explain why linking a run to a production order would require an approved run-to-order mapping, and why sharing a machine ID does not establish a causal link to the Day 1 faults.
+
+## 15:30 — Replay an Operations Agent rule
 
 **Microsoft Learn:** [Operations Agent and playbooks](https://learn.microsoft.com/en-us/fabric/real-time-intelligence/operations-agent). Read about rules and playbooks; skip instructions to start the agent or configure actions.
 
-1. **Inspect (10 min):** Open the facilitator's stopped playbook. Identify the data source, grouping, threshold, and intended human action. If unavailable, annotate those four parts in your notes. Do not start the agent or configure any actions.
-2. **Replay (15 min):** Use the Day 1 reference query at `>= 3`, `>= 8`, and `>= 9`. Answer the rule-check questions below using the KQL results and your scorecard.
-3. **Decide (5 min):** Write your recommendation with the UTC window, counts, and one limitation. Leave the final decision with a human.
+1. **Inspect (5 min):** Open the facilitator's stopped playbook. Identify the data source, grouping, threshold, and intended human action. If unavailable, annotate those parts in your notes. Do not start the agent or configure any actions.
+2. **Replay and decide (10 min):** Use the Day 1 KQL query at `>= 3`, `>= 8`, and `>= 9`; use saved results if needed. Use the checks below to explain why severity breaks the tie. Record the notebook's recipe anomaly as a separate signal and leave the decision with a human.
 
 **Operations Agent rule-check questions:** These are for the group to answer from the stopped playbook and historical KQL, not prompts to paste into the Data Agent.
 
@@ -345,8 +344,8 @@ machine_events
 
 ## 15:45 — Present the evidence and compare platforms
 
-- **Evidence (10 min):** Show your reconciled scorecard, one checked agent answer, and the threshold trade-off. Label any fallback. Pass if the numbers reconcile, the ranking is defensible, and you state what the data cannot tell you. Bring that evidence card into Day 3.
-- **Fabric vs. Databricks (5 min):** Record what you actually observed in Fabric: how you shared the Spark output, which data had to be loaded twice, how you fed evidence into reporting or an agent, and where permissions or capacity slowed you down. Use the same dataset, outputs, and success checks in an Azure Databricks pilot. Compare handoffs, governed access, and how much work it takes to reproduce the decision. This workshop is not a performance or pricing benchmark.
+- **Evidence (10 min):** Show the fault and severity counts, one checked agent answer, and the traced recipe anomaly. State one limitation: the two sources don't prove causation or order impact. Label any fallback and carry the evidence card into Day 3.
+- **Fabric vs. Databricks (5 min):** Record how you landed the API batch, tested and reran the notebook, and made a flagged run traceable for a reviewer. Use the same inputs, rule, and expected results in an Azure Databricks pilot. Compare effort, monitoring, and governance. This workshop is not a performance or pricing benchmark.
 
 [Microsoft Learn: Fabric end-to-end tutorials](https://learn.microsoft.com/en-us/fabric/fundamentals/end-to-end-tutorials) · [Microsoft Learn: What is Azure Databricks?](https://learn.microsoft.com/en-us/azure/databricks/introduction/)
 
@@ -415,6 +414,7 @@ Draft privately for 30 minutes, exchange plans for 20 minutes, then revise for 1
 | Fault-rate extension | North 8/169 (4.73%); South 8/170 (4.71%); East 0/161 (0%). |
 | November 1–10 UTC | `P01 / MC-N01`: 8 faults; `P02 / MC-S01`: 8 faults. |
 | Day 2 machine scorecard | Five machine rows, 500 events, and 16 faults in total. `MC-N01` and `MC-S01` each show 8 faults out of 8 recorded events (100%); the other three machines show no faults. This is not a failure probability. |
+| Day 2 recipe anomaly | **8 Normal, 1 ApprovedChange, 1 Anomaly.** `P01 → P01:MC-N01 → N01-D05 → N01-D05:recipe_mismatch`, November 5 UTC, expected A and actual B. `S01-D05` ran B with approval, so it was not flagged. A repeat of the same snapshot does not add a second anomaly. |
 | First vs. second five-day windows | Both machines: 5 then 3 faults. |
 | Severity | 6 High events, all on `MC-N01`; first at `2026-11-01 00:00 UTC`. |
 | Recommendation | Review `MC-N01` first. Neither root cause nor affected orders can be inferred. |
@@ -439,7 +439,7 @@ Pick at most one at a time. These are not prerequisites or PoC deliverables. Use
 
 ## Fabric notebook — Check data quality and publish a summary (25–40 min)
 
-Reuse your Day 2 `MaintenanceNotebook_<LabID>` (for example, `MaintenanceNotebook_lab07`). Use the lab ID you chose in place of `lab07`. If you took the read-only fallback and Spark is now available, create the notebook and attach your Day 1 Lakehouse as the default. Run each block in a separate cell. Unlike the machine scorecard, this exercise checks the plant lookup and creates a plant-level summary. If your notebook requires schema qualification, prefix the table names with `dbo.` in a schema-enabled Lakehouse.
+Create a practice **Notebook** named `MaintenanceQuality_<LabID>` (for example, `MaintenanceQuality_lab07`) and attach your Day 1 Lakehouse as the default. Use the lab ID you chose in place of `lab07`. Run each block in a separate cell. This exercise checks the Day 1 event lookup and creates a plant-level summary; it doesn't modify the anomaly tables. If your notebook requires schema qualification, prefix the table names with `dbo.` in a schema-enabled Lakehouse.
 
 ```sql
 %%sql

@@ -1,0 +1,21 @@
+{
+  "recipePlans": [
+    {"PlantId": "P01", "MachineId": "MC-N01", "LineName": "North Line 1", "ExpectedRecipe": "A"},
+    {"PlantId": "P02", "MachineId": "MC-S01", "LineName": "South Line 1", "ExpectedRecipe": "A"}
+  ],
+  "approvedChanges": [
+    {"RunId": "S01-D05", "ApprovedRecipe": "B"}
+  ],
+  "runs": [
+    {"RunId": "N01-D01", "PlantId": "P01", "MachineId": "MC-N01", "RunDateUtc": "2026-11-01", "ActualRecipe": "A"},
+    {"RunId": "N01-D02", "PlantId": "P01", "MachineId": "MC-N01", "RunDateUtc": "2026-11-02", "ActualRecipe": "A"},
+    {"RunId": "N01-D03", "PlantId": "P01", "MachineId": "MC-N01", "RunDateUtc": "2026-11-03", "ActualRecipe": "A"},
+    {"RunId": "N01-D04", "PlantId": "P01", "MachineId": "MC-N01", "RunDateUtc": "2026-11-04", "ActualRecipe": "A"},
+    {"RunId": "N01-D05", "PlantId": "P01", "MachineId": "MC-N01", "RunDateUtc": "2026-11-05", "ActualRecipe": "B"},
+    {"RunId": "S01-D01", "PlantId": "P02", "MachineId": "MC-S01", "RunDateUtc": "2026-11-01", "ActualRecipe": "A"},
+    {"RunId": "S01-D02", "PlantId": "P02", "MachineId": "MC-S01", "RunDateUtc": "2026-11-02", "ActualRecipe": "A"},
+    {"RunId": "S01-D03", "PlantId": "P02", "MachineId": "MC-S01", "RunDateUtc": "2026-11-03", "ActualRecipe": "A"},
+    {"RunId": "S01-D04", "PlantId": "P02", "MachineId": "MC-S01", "RunDateUtc": "2026-11-04", "ActualRecipe": "A"},
+    {"RunId": "S01-D05", "PlantId": "P02", "MachineId": "MC-S01", "RunDateUtc": "2026-11-05", "ActualRecipe": "B"}
+  ]
+}

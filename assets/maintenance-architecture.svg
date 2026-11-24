@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 930" width="1000" height="930" role="img" aria-labelledby="title desc">
   <title id="title">Maintenance review: workshop solution architecture</title>
-  <desc id="desc">Two CSVs feed the Lakehouse; only machine events feed Eventhouse. The SQL and semantic model path and the KQL, dashboard, and agent path produce evidence for a human shift lead. A manual handoff takes that evidence to the Day 3 Foundry walkthrough and pilot planning.</desc>
+  <desc id="desc">Two CSVs feed the Lakehouse; only machine events feed Eventhouse. A separate Day 2 API batch lands in Lakehouse Files. Spark writes recipe anomalies to Delta, and the ontology traces them to individual runs. Lakehouse and KQL evidence support a human shift lead, followed by a manual Day 3 Foundry handoff.</desc>
   <defs>
     <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
       <path d="M0 0L8 4L0 8Z" fill="#506480"/>
@@ -30,7 +30,7 @@
   <path class="arrow" d="M180 174V266"/>
   <path class="arrow" d="M648 174V198H354V266"/>
   <path class="arrow" d="M824 174V266"/>
-  <text x="500" y="247" text-anchor="middle" class="label">FABRIC TEAM WORKSPACE</text>
+  <text x="500" y="247" text-anchor="middle" class="label">FABRIC WORKSHOP WORKSPACE</text>
 
   <rect x="50" y="268" width="416" height="116" rx="12" fill="#e6f5ff" stroke="#79b6da"/>
   <rect x="534" y="268" width="416" height="116" rx="12" fill="#e5f7f1" stroke="#73b7a1"/>
@@ -45,10 +45,10 @@
   <path class="arrow" d="M742 384V418"/>
   <rect x="50" y="420" width="416" height="144" rx="12" fill="#e6f5ff" stroke="#79b6da"/>
   <rect x="534" y="420" width="416" height="144" rx="12" fill="#e5f7f1" stroke="#73b7a1"/>
-  <text x="70" y="450" class="label">DAY 2 / REUSE LAKEHOUSE TABLES</text>
-  <text x="70" y="482" class="body">Model and DAX: check the totals.</text>
-  <text x="70" y="510" class="body">Ontology sketch: plant, machine, fault event.</text>
-  <text x="70" y="538" class="body muted">Use the read-only model route if needed.</text>
+  <text x="70" y="450" class="label">DAY 2 / ADD THE PROCESS FEED</text>
+  <text x="70" y="482" class="body">Data Factory: API batch to Lakehouse Files.</text>
+  <text x="70" y="510" class="body">Spark: enrich and write anomalies to Delta.</text>
+  <text x="70" y="538" class="body muted">Ontology traces runs; DAX checks fault totals.</text>
   <text x="554" y="450" class="label">DAY 2 / REUSE THE KQL DATABASE</text>
   <text x="554" y="482" class="body">Data Agent: verify answers against KQL.</text>
   <text x="554" y="510" class="body">Replay the Operations Agent rule in KQL.</text>
