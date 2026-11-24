@@ -177,7 +177,7 @@ Do this after the core handoff is ready. Use the same synthetic CSV already in y
 
 **09:30–11:30 is facilitator-led:** recap, theory, a 15-minute break, and a demo using Day 1's assets. **Hands-on work starts at 11:30.**
 
-**Intermediate challenge: defend your maintenance recommendation.** Two machines tie on fault count. Use the Day 1 scorecard to verify the fault evidence, then test whether a separate process feed gives the reviewer useful context. Build a rule for an unexpected recipe change, automate the notebook run, and trace the anomaly in Fabric IQ without implying that it caused a fault.
+**Intermediate challenge: defend your maintenance recommendation.** Two machines tie on fault count. Use the prepared KQL scorecard in the 13:15 lab to verify the Day 1 fault evidence; you didn't need to build a scorecard yesterday. In today's hands-on lab, use a separate process feed to detect an unexpected recipe change. Connect the Copy and Notebook activities and trace the result in Fabric IQ. The process feed adds context; it doesn't prove what caused a fault.
 
 | Time | Activity | What you leave with |
 |---|---|---|
@@ -194,7 +194,7 @@ Do this after the core handoff is ready. Use the same synthetic CSV already in y
 | 15:30–15:45 | Replay an Operations Agent rule and defend a threshold | A recorded threshold trade-off, with no actions running |
 | 15:45–16:00 | Present your recommendation and discuss the platform comparison | One evidence card for Day 3 and one question for a fair pilot |
 
-### 09:30–11:30 — Understand the model and agents before building
+### 09:30–11:30 — Preview the pipeline, model, ontology, and agents
 
 - **Recap (30 min):** The facilitator opens the Day 1 Lakehouse, KQL database, and dashboard or saved queries. Ask the room what broke the tie in fault counts and what the data still cannot prove.
 - **Theory (45 min):** Data Factory lands an API response; Spark applies a custom rule and writes results to OneLake. DAX and KQL check the separate Day 1 fault evidence. An ontology links business entities so reviewers can follow the evidence. Both agent exercises still use Day 1 KQL, not the notebook output or the semantic model.
@@ -204,18 +204,58 @@ Do this after the core handoff is ready. Use the same synthetic CSV already in y
 
 **Starter files:** [Synthetic process batch](../data/process_batch.json) · [Importable Spark SQL notebook](../labs/process-anomaly.ipynb). Save both files locally with their original extensions. The source is a fixed replay of November 1–5, 2026 UTC, not a live plant feed.
 
+**Start here — all participants**
+
+1. Reopen your **Day 1 workspace and Lakehouse**. Confirm it contains the `plants` table. Keep the same lab ID you chose on Day 1; `lab07` is only an example.
+2. Start with the **workshop API**. The Copy activity and notebook must use the **same Lakehouse** and file: `Files/process_lab07/process_batch.json`, with `lab07` replaced by your lab ID.
+3. If you can't copy the file within **10 minutes**, switch to the JSON upload below and continue with the notebook. You don't need a working pipeline to do the notebook or ontology lab.
+
 **Microsoft Learn:** [HTTP in a Copy activity](https://learn.microsoft.com/en-us/fabric/data-factory/connector-http-copy-activity) · [Lakehouse destination](https://learn.microsoft.com/en-us/fabric/data-factory/connector-lakehouse-copy-activity) · [Notebook activity](https://learn.microsoft.com/en-us/fabric/data-factory/notebook-activity) · [Pipeline runs and schedules](https://learn.microsoft.com/en-us/fabric/data-factory/pipeline-runs).
 
-1. **Land the batch (10 min):** Follow the facilitator's prepared Data Factory pipeline, or create a **Data pipeline** named `MaintenanceProcessPipeline_<LabID>` (for example, `MaintenanceProcessPipeline_lab07`). Use the lab ID you chose in place of `lab07`. In **Copy data**, use the **HTTP** connector with anonymous `GET`, base URL `https://api.github.com`, and relative URL `repos/kirannn-kp/fabric-manufacturing-workshop-site/contents/data/process_batch.json?ref=main`. Under **Additional headers**, set `User-Agent` to `Fabric-Workshop` and `Accept` to `application/vnd.github+json`. Use **Binary** format to keep the API response unchanged. Set the **Lakehouse** destination to **Files**, **Binary**, folder `process_lab07`, file `process_batch.json`; substitute your own lab ID. If the connection is blocked or rate-limited, upload the starter JSON to that same path instead. The notebook accepts both the GitHub response wrapper and the unwrapped download.
-2. **Enrich and classify (25 min):** Use **Import → Notebook** in the workspace to import the starter as `MaintenanceProcessNotebook_<LabID>` (for example, `MaintenanceProcessNotebook_lab07`). Use the lab ID you chose in place of `lab07`. Attach the Day 1 Lakehouse as the **default** and replace all `lab07` occurrences in the notebook's paths and table names with your lab ID. Join the runs to the plant lookup, expected recipe by plant and machine, and approvals by run ID. Before reading the reference cell, write the rule: the actual recipe matches the expected one, an exact change is approved, the change is unexpected, or required reference data is missing.
-3. **Run and check (15 min):** Run the notebook. Verify **8 Normal, 1 ApprovedChange, and 1 Anomaly**. The flagged record should be `N01-D05` on `MC-N01` on **November 5 UTC**: expected `A`, actual `B`. The approved switch on `S01-D05` must not be flagged. The notebook writes only your `process_machines_<LabID>`, `process_runs_<LabID>`, and `process_anomalies_<LabID>` Delta tables. For `lab07`, these end in `_lab07`; use the lab ID you chose. Replaying the same fixed batch replaces those practice snapshots, so the anomaly count stays **1**. Do not overwrite anyone else's outputs, `plants`, or `machine_events`.
-4. **Orchestrate and monitor (10 min):** In the prepared pipeline, inspect the **Notebook** activity and its **On success** dependency on Copy data. If you created your own pipeline and the API copy works, add that dependency and select the saved notebook configured for your copy's Lakehouse and path. Use a manual **Run** and check both activities in run history; if the full run is still in progress or you used local JSON, look at the facilitator's run rather than wiring a failing copy. Show where to configure a daily schedule but leave it **off**. A real incremental pipeline would pass a run date or watermark and merge by stable IDs; this workshop uses one replayable snapshot. No live alerts or changes to manufacturing systems.
+#### 1. Land the batch (10 min)
 
-**Fallback:** If Spark or Delta writes are blocked after 10 minutes, use the facilitator's prepared tables or work out the rule from the JSON and compare it with the evidence card. Don't treat a fallback as a successful live pipeline run.
+**Participant action:** Create a **Data pipeline** named `MaintenanceProcessPipeline_<LabID>` and add a **Copy data** activity. Use the facilitator's pipeline as a reference, not as your destination. Watching the demo does not put the file in your folder.
 
-### 13:15 — Cross-check the Day 1 scorecard in a semantic model
+| Copy setting | Value |
+|---|---|
+| Source | **HTTP** connection, **Anonymous** authentication, `GET` |
+| Base URL | `https://api.github.com` |
+| Relative URL | `repos/kirannn-kp/fabric-manufacturing-workshop-site/contents/data/process_batch.json?ref=main` |
+| Additional headers | `User-Agent`: `Fabric-Workshop`; `Accept`: `application/vnd.github+json` |
+| Source file format | **Binary** (keep the response unchanged) |
+| Destination | Your **Day 1 Lakehouse** → **Files** → **Binary** format |
+| Folder and file | Folder `process_lab07` (replace `lab07` with your lab ID); file `process_batch.json` |
 
-The morning's process runs are an independent input, not the denominator for Day 1 fault rates. Use this **prepared KQL scorecard query** (or a facilitator's saved output) to carry the original fault evidence into the DAX and agent labs:
+Save and **Run** the pipeline manually. In your Lakehouse, expand **Files**, open your `process_<LabID>` folder, and confirm `process_batch.json` is there before moving on.
+
+**Fallback — upload instead:** In that Lakehouse, open **Files**, create `process_<LabID>` if needed, and upload the downloaded `process_batch.json` into it. Check the file name and folder match the notebook path. The notebook reads both the API response and the downloaded JSON. Note that you used an upload, then go straight to step 2.
+
+#### 2. Set up the notebook and write the rule (25 min)
+
+1. In the workspace, select **Import → Notebook** and import the `.ipynb` starter as `MaintenanceProcessNotebook_<LabID>`.
+2. Attach your **Day 1 Lakehouse** and make it the **default**. In the notebook, replace `lab07` with your lab ID in the input path and every output table name. If your Lakehouse doesn't use schemas, remove `dbo.` from the notebook's SQL.
+3. Write your rule before you scroll to the reference SQL. Use the plant lookup, the expected recipe for each plant and machine, and the approval for each run. Decide how to handle four cases: matching recipe, change approved for that exact recipe, unexpected change, and missing required data. Then compare your rule with the starter.
+
+#### 3. Run the notebook and check the result (15 min)
+
+Run the notebook cells in order. In the last two outputs, check for **8 Normal, 1 ApprovedChange, and 1 Anomaly**. The only anomaly should be `N01-D05` on `MC-N01` on **November 5 UTC** (expected `A`, actual `B`). `S01-D05` also switched to `B`, but it was approved and must not be flagged.
+
+**Save for 14:55:** In the Lakehouse under **Tables** (under `dbo` if schemas are enabled), find your `process_machines_<LabID>`, `process_runs_<LabID>`, and `process_anomalies_<LabID>` Delta tables. You'll bind them in the ontology lab. A repeat run replaces only your three practice snapshots, so the anomaly count stays **1**. Don't overwrite `plants`, `machine_events`, or another participant's outputs.
+
+**Fallback — notebook or Delta writes blocked:** After 10 minutes of troubleshooting, use the facilitator's tables if available. Otherwise work out the rule from the JSON and check it against **Evidence card and help**. Record which fallback you used.
+
+#### 4. Connect and check the pipeline (10 min)
+
+- **Participant action, if Copy and the notebook both worked:** Add a **Notebook** activity, select your saved notebook, and connect Copy data → Notebook with **On success**. Save, **Run** manually, and check both activities in run history. If they're still running when time is up, record the run as pending.
+- **Facilitator demo:** Show the **On success** dependency, a completed run if available, and where to set a daily schedule. If you used the JSON upload or notebook fallback, follow the demo or review the design instead of wiring a failing activity. Don't mark a demo or fallback as your own successful run.
+
+**Leave scheduling off.** A production pipeline would pass a run date or watermark and merge by stable IDs instead of replacing a fixed snapshot. Don't enable alerts or write back to manufacturing systems.
+
+**Optional — use your own API after the sample lab:** Early finishers can try a small, approved endpoint that already works from Fabric. Use a separate practice pipeline and destination. Adapt the connection and map the payload to the starter's `runs`, `recipePlans`, and `approvedChanges` fields before reusing the notebook. Keep the sample tables for the ontology exercise. Don't put credentials or internal data in GitHub or MOAW.
+
+### 13:15 — Cross-check Day 1 faults in a semantic model
+
+Open your Day 1 KQL queryset and run the **prepared scorecard query below**, or use the facilitator's saved output. It uses the Day 1 `machine_events` data, not the new process tables. The morning's process runs are not used to calculate Day 1 fault rates.
 
 ```kusto
 machine_events
@@ -285,11 +325,13 @@ machine_events
 
 ### 14:55 — Create a Fabric IQ ontology and trace the anomaly
 
+**Start with your Lakehouse tables, not KQL.** You'll use `plants` from Day 1 and the three `process_*_<LabID>` tables from the 11:30 notebook. If your notebook didn't produce them, use the facilitator's tables if available. If you can't create an ontology or read the tables, take the design fallback below.
+
 **Microsoft Learn:** [Create an ontology](https://learn.microsoft.com/en-us/fabric/iq/ontology/tutorial-1-create-ontology) · [Create and bind relationship types](https://learn.microsoft.com/en-us/fabric/iq/ontology/how-to-create-relationship-types).
 
-1. **Create (5 min):** In the workshop workspace, select **New item → Ontology (preview)** and name your item `MaintenanceOntology_<LabID>` (for example, `MaintenanceOntology_lab07`). Use the lab ID you chose in place of `lab07`. You need item creation permission and the ontology preview enabled for your account. If the item is missing, continue with the design fallback instead of changing tenant settings.
-2. **Bind the entity types (15 min):** Add the four entity types below and bind each to its OneLake table; select the indicated key. Use your morning Delta tables, or the facilitator's prepared tables if you used a pipeline fallback. Bind only the listed keys and properties to stay within the lab.
-3. **Connect and trace (15 min):** Add the three relationship types below. For each, select the origin and target properties. Leave **Use mapping table** off: the listed keys are already on both entity sources. Save and open **Explore ontology**. Search for `P01` and follow the relationships to `N01-D05:recipe_mismatch`; verify the expected and actual recipes and the reason. Check that `S01-D05` is a process run but has no anomaly. If instances are still loading, validate the keys against the Delta tables rather than waiting.
+1. **Create (5 min):** In the workshop workspace, select **New item → Ontology (preview)** and name it `MaintenanceOntology_<LabID>` using your lab ID. If the item is missing or creation is blocked, don't change tenant settings; use the design fallback.
+2. **First live checkpoint (15 min):** Bind `Plant` and `Machine` to their tables using the first two rows below. Set their unique keys and add `ContainsMachine` using `PlantId` on both sides. Save and check that `P01` links to `P01:MC-N01`.
+3. **Complete the trace (15 min):** Bind `ProcessRun` and `Anomaly` and add `ExecutesRun` and `HasAnomaly`. For all three relationships, leave **Use mapping table** off: the matching columns are already in both tables. Save and open **Explore ontology**. Check both paths below. If time runs out or instances are still loading, keep your first checkpoint and trace the remaining links using the tables or evidence card.
 
 | Entity type | OneLake table | Unique entity key | Other properties to bind |
 |---|---|---|---|
@@ -304,7 +346,12 @@ machine_events
 | `ExecutesRun` | Machine → ProcessRun | `MachineKey` → `MachineKey` |
 | `HasAnomaly` | ProcessRun → Anomaly | `RunId` → `RunId` |
 
-**Design fallback:** Draw the same four entities, write the keys on the arrows, and trace the two day-5 rows using the evidence card or prepared tables. Label it a design exercise, not a live ontology. In either path, explain why linking a run to a production order would require an approved run-to-order mapping, and why sharing a machine ID does not establish a causal link to the Day 1 faults.
+**Check both paths:**
+
+- **Flagged:** `P01` → `P01:MC-N01` → `N01-D05` → `N01-D05:recipe_mismatch`. Check the expected recipe `A`, actual `B`, and the reason.
+- **Approved:** `P02` → `P02:MC-S01` → `S01-D05`. The run should be `ApprovedChange`, with no linked anomaly.
+
+**Design fallback:** Use **Evidence card and help** or the facilitator's tables to draw the same four entities, label the arrows with their matching properties, and trace both paths. Record what you completed live and what you checked on paper. In either path, explain why linking a run to a production order would require an approved run-to-order mapping, and why sharing a machine ID does not establish a causal link to the Day 1 faults.
 
 ### 15:30 — Replay an Operations Agent rule
 
